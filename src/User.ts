@@ -33,7 +33,7 @@ export class TestUser<C extends Context> {
   }[] = [];
 
   private update_id = 10000;
-  private message_id = 1;
+  private message_id = 100;
 
   /**
    * Creates a test user and helps you to send mock updates as if they were sent
@@ -113,7 +113,7 @@ export class TestUser<C extends Context> {
       message: {
         date: Date.now(),
         chat: this.chat,
-        message_id: 1365,
+        message_id: this.message_id,
         from: this.user,
         ...opts,
       },
@@ -183,7 +183,7 @@ export class TestUser<C extends Context> {
       message: {
         date: Date.now(),
         chat: this.chat,
-        message_id: 1365,
+        message_id: this.message_id,
         from: this.user,
         text,
       },
@@ -205,7 +205,7 @@ export class TestUser<C extends Context> {
       message: {
         date: Date.now(),
         chat: this.chat,
-        message_id: 1365,
+        message_id: this.message_id,
         from: this.user,
         text: replyText,
         reply_to_message: messageToReplyTo,
@@ -231,7 +231,7 @@ export class TestUser<C extends Context> {
       date: Date.now() - 2000,
       chat: this.chat,
       from: this.user,
-      message_id: 1365,
+      message_id: this.message_id,
       text,
       edit_date: Date.now(),
     });
@@ -251,7 +251,7 @@ export class TestUser<C extends Context> {
         date: Date.now(),
         chat: this.chat,
         from: this.user,
-        message_id: 23123,
+        message_id: this.message_id,
         ...options,
       },
     });
@@ -271,7 +271,7 @@ export class TestUser<C extends Context> {
         date: Date.now(),
         chat: this.chat,
         from: this.user,
-        message_id: 23123,
+        message_id: this.message_id,
         ...options,
       },
     });
@@ -291,7 +291,7 @@ export class TestUser<C extends Context> {
         date: Date.now(),
         chat: this.chat,
         from: this.user,
-        message_id: 23123,
+        message_id: this.message_id,
         ...options,
       },
     });
@@ -311,7 +311,7 @@ export class TestUser<C extends Context> {
         date: Date.now(),
         chat: this.chat,
         from: this.user,
-        message_id: 23123,
+        message_id: this.message_id,
         ...options,
       },
     });
@@ -327,7 +327,7 @@ export class TestUser<C extends Context> {
         date: Date.now(),
         chat: this.chat,
         from: this.user,
-        message_id: 23123,
+        message_id: this.message_id,
         ...options,
       },
     });
@@ -347,7 +347,7 @@ export class TestUser<C extends Context> {
         date: Date.now(),
         chat: this.chat,
         from: this.user,
-        message_id: 23123,
+        message_id: this.message_id,
         ...options,
       },
     });
@@ -366,7 +366,7 @@ export class TestUser<C extends Context> {
         date: Date.now(),
         chat: this.chat,
         from: this.user,
-        message_id: 23123,
+        message_id: this.message_id,
         ...options,
       },
     });
@@ -386,7 +386,7 @@ export class TestUser<C extends Context> {
         date: Date.now(),
         chat: this.chat,
         from: this.user,
-        message_id: 23123,
+        message_id: this.message_id,
         ...options,
       },
     });
