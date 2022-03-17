@@ -20,7 +20,7 @@ export interface ForwardMessageOptions {
   message: GrammyTypes.Message;
 }
 
-export interface Captionable {
+export interface MaybeCaptioned {
   caption?: string;
   caption_entities?: GrammyTypes.MessageEntity[];
 }

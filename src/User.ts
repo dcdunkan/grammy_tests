@@ -140,7 +140,7 @@ export class TestUser<C extends Context> {
 
   /**
    * Mocks a message forwarding update.
-   * @param options Details about the forwaring message.
+   * @param options Details about the forwarding message.
    * @returns The update sent.
    */
   async forwardMessage(
@@ -152,8 +152,8 @@ export class TestUser<C extends Context> {
         from: this.user,
         forward_from: options?.forward_from ?? {
           id: 1111111,
-          first_name: "Forward Firstname",
-          last_name: "Forward Lastname",
+          first_name: "Forward First name",
+          last_name: "Forward Last name",
           language_code: "en",
           is_bot: false,
           username: "forwarded_from_usr",
@@ -241,7 +241,7 @@ export class TestUser<C extends Context> {
   async sendAnimation(
     options:
       & { animation: GrammyTypes.Animation }
-      & types.Captionable
+      & types.MaybeCaptioned
       & types.MaybeReplied
       & types.Misc,
   ) {
@@ -261,7 +261,7 @@ export class TestUser<C extends Context> {
   async sendAudio(
     options:
       & { audio: GrammyTypes.Audio }
-      & types.Captionable
+      & types.MaybeCaptioned
       & types.MaybeReplied
       & types.Misc,
   ) {
@@ -281,7 +281,7 @@ export class TestUser<C extends Context> {
   async sendDocument(
     options:
       & { document: GrammyTypes.Document }
-      & types.Captionable
+      & types.MaybeCaptioned
       & types.MaybeReplied
       & types.Misc,
   ) {
@@ -301,7 +301,7 @@ export class TestUser<C extends Context> {
   async sendPhoto(
     options:
       & { photo: GrammyTypes.PhotoSize[] }
-      & types.Captionable
+      & types.MaybeCaptioned
       & types.MaybeReplied
       & types.Misc,
   ) {
@@ -337,7 +337,7 @@ export class TestUser<C extends Context> {
   async sendVideo(
     options:
       & { video: GrammyTypes.Video }
-      & types.Captionable
+      & types.MaybeCaptioned
       & types.MaybeReplied
       & types.Misc,
   ) {
@@ -376,7 +376,7 @@ export class TestUser<C extends Context> {
   async sendVoice(
     options:
       & { voice: GrammyTypes.Voice }
-      & types.Captionable
+      & types.MaybeCaptioned
       & types.MaybeReplied
       & types.Misc,
   ) {
