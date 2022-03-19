@@ -1,5 +1,7 @@
 import { GrammyTypes } from "../deps.ts";
 
+export type User = Omit<GrammyTypes.User, "is_bot">;
+
 export interface TestUserConfig {
   user?: GrammyTypes.User;
   chat?: GrammyTypes.Chat.PrivateChat;

@@ -72,12 +72,12 @@ export class TestUser<C extends Context> {
   }
 
   /** Clears the requests that the bot sent to the user. */
-  clearIncomingRequests(): void {
+  clearIncoming(): void {
     this.incoming = [];
   }
 
   /** Clears the requests that the bot sent to the user. */
-  clearOutgoingUpdates(): void {
+  clearOutgoing(): void {
     this.outgoing = [];
   }
 
@@ -97,7 +97,7 @@ export class TestUser<C extends Context> {
   /**
    * Mocks an incoming message update. Sends a normal text message to the bot.
    * Helps to test `bot.hears`, `bot.on("message:text")` related updates.
-   * @param text Text message to be sent.
+   * @param options Can be the text to send or options.
    * @returns The update sent.
    */
   async sendMessage(
@@ -440,4 +440,16 @@ export class TestUser<C extends Context> {
   //     chosen_inline_result: chosenInlineResult,
   //   });
   // }
+
+  async pinMessage() {
+  }
+
+  async blockBot() {
+  }
+
+  async startBot() {
+  }
+
+  async restartBot() {
+  }
 }
