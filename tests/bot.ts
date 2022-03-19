@@ -6,9 +6,12 @@ bot.use(session({
   initial: () => ({ counter: 0 }),
 }));
 
-bot.command("start", async (ctx, next) => {
-  await ctx.reply("Hello!");
-  await next();
+bot.command("start", async (ctx) => {
+  await ctx.reply("Hello there!");
+});
+
+bot.hears("Hi", async (ctx) => {
+  await ctx.reply("Hi!");
 });
 
 bot.command("reset", async (ctx) => {

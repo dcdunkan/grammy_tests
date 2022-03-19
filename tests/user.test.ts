@@ -1,9 +1,28 @@
 import { bot, MyContext } from "./bot.ts";
-import { TestUser } from "../mod.ts";
+import { Chats } from "../mod.ts";
 import { assertEquals } from "https://deno.land/std@0.127.0/testing/asserts.ts";
 
-const user = new TestUser<MyContext>(bot);
-await bot.init();
+const chats = new Chats<MyContext>(bot);
+
+const user = chats.newUser({
+  first_name: "Test user",
+  id: 1234567890,
+});
+
+Deno.test("hello-hi", async (t) => {
+  await t.step("hello", async () => {
+    await user.command("start");
+    assertEquals(user.last.payload.text, "Hello there!");
+  });
+
+  await t.step("hi", async () => {
+    await user.sendMessage("Hi");
+    assertEquals(user.last.payload.text, "Hi!");
+  });
+
+  user.clearIncoming();
+  user.clearOutgoing();
+});
 
 Deno.test("message counter", async (t) => {
   await t.step("increase counter to 3", async () => {
@@ -30,8 +49,8 @@ Deno.test("message counter", async (t) => {
 
   assertEquals(user.outgoing.length, 6);
   assertEquals(user.incoming.length, 6);
-  user.clearIncomingRequests();
-  user.clearOutgoingUpdates();
+  user.clearIncoming();
+  user.clearOutgoing();
 
   // If the reset was already called, the bot sends two messages -->
   // 1. "Reset!" 2. "(It was, already!)".
@@ -47,8 +66,8 @@ Deno.test("message counter", async (t) => {
 
   assertEquals(user.outgoing.length, 1);
   assertEquals(user.incoming.length, 2); // + 1 because double replies from last /reset.
-  user.clearIncomingRequests();
-  user.clearOutgoingUpdates();
+  user.clearIncoming();
+  user.clearOutgoing();
 });
 
 Deno.test("forwarded messages", async (t) => {
@@ -108,8 +127,8 @@ Deno.test("forwarded messages", async (t) => {
   });
 
   assertEquals(user.incoming.length, 3);
-  user.clearIncomingRequests();
-  user.clearOutgoingUpdates();
+  user.clearIncoming();
+  user.clearOutgoing();
 });
 
 Deno.test("reply to message", async () => {
@@ -123,11 +142,10 @@ Deno.test("reply to message", async () => {
   assertEquals(
     user.last.payload.text,
     `You are replying to 333`,
-    "Done",
   );
 
-  user.clearIncomingRequests();
-  user.clearOutgoingUpdates();
+  user.clearIncoming();
+  user.clearOutgoing();
 });
 
 Deno.test("edited message", async (t) => {
@@ -157,8 +175,8 @@ Deno.test("edited message", async (t) => {
   assertEquals(user.incoming.length, 2);
   assertEquals(user.outgoing.length, 2);
 
-  user.clearIncomingRequests();
-  user.clearOutgoingUpdates();
+  user.clearIncoming();
+  user.clearOutgoing();
 });
 
 Deno.test("media handling", async (t) => {
@@ -293,8 +311,8 @@ Deno.test("media handling", async (t) => {
   assertEquals(user.outgoing.length, 9);
   assertEquals(user.incoming.length, 10);
 
-  user.clearIncomingRequests();
-  user.clearOutgoingUpdates();
+  user.clearIncoming();
+  user.clearOutgoing();
 });
 
 Deno.test("inline query", async (t) => {
@@ -315,8 +333,8 @@ Deno.test("inline query", async (t) => {
   //   assertEquals(user.last.payload.text, "You chose: grammy-website");
   // });
 
-  user.clearIncomingRequests();
-  user.clearOutgoingUpdates();
+  user.clearIncoming();
+  user.clearOutgoing();
 });
 
 Deno.test("callback query", async (t) => {
@@ -328,6 +346,6 @@ Deno.test("callback query", async (t) => {
   assertEquals(user.outgoing.length, 1);
   assertEquals(user.incoming.length, 1);
 
-  user.clearOutgoingUpdates();
-  user.clearIncomingRequests();
+  user.clearOutgoing();
+  user.clearIncoming();
 });
