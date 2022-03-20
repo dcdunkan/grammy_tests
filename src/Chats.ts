@@ -16,24 +16,12 @@ export class Chats<BC extends Context = Context> {
   }
 
   /**
-   * Creates a fake Telegram user account to mock updates related to a private
-   * chat.
+   * Creates a test user and helps you to send mock updates as if they were sent
+   * from a private chat to the bot.
    * @param user Information about the user.
    * @returns A `TestUser` instance.
    */
   newUser(user: User): TestUser<BC> {
-    const chat: GrammyTypes.Chat.PrivateChat = {
-      first_name: user.first_name,
-      id: user.id,
-      type: "private",
-      last_name: user.last_name,
-      username: user.username,
-    };
-
-    return new TestUser<BC>(this.bot, {
-      botInfo: this.bot.botInfo,
-      chat: chat,
-      user: { ...user, is_bot: false },
-    });
+    return new TestUser<BC>(this.bot, user);
   }
 }

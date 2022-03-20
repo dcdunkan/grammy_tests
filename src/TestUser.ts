@@ -3,26 +3,11 @@ import { Bot, Context, GrammyTypes, Methods, RawApi } from "../deps.ts";
 import * as types from "./types.ts";
 
 /**
- * Creates a Telegram user account and helps to send updates as if they were
- * sent from a private chat to the bot.
+ * Creates a test user account.
  */
 export class TestUser<C extends Context> {
-  public user: GrammyTypes.User = {
-    first_name: "Test User",
-    last_name: "Account",
-    id: 123456789,
-    is_bot: false,
-    language_code: "en",
-    username: "test_usr",
-  };
-  public chat: GrammyTypes.Chat.PrivateChat = {
-    first_name: "Test User",
-    last_name: "Account",
-    id: 123456789,
-    username: "test_usr",
-    type: "private",
-  };
-  private config?: types.TestUserConfig;
+  public readonly user: GrammyTypes.User;
+  public readonly chat: GrammyTypes.Chat.PrivateChat;
   /** The updates sent by the user to the bot. */
   public outgoing: GrammyTypes.Update[] = [];
   /** The responses sent by the bot to the user. */
@@ -39,21 +24,18 @@ export class TestUser<C extends Context> {
    * Creates a test user and helps you to send mock updates as if they were sent
    * from a private chat to the bot.
    * @param bot The `Bot` instance, that to be tested.
-   * @param config Custom configuration for the test user.
+   * @param user Custom configuration for the test user.
    */
-  constructor(private bot: Bot<C>, config?: types.TestUserConfig) {
-    this.config = config;
-    if (config?.user) this.user = config.user;
-    if (config?.chat) this.chat = config.chat;
-    this.bot.botInfo = config?.botInfo ?? {
-      id: 42,
-      first_name: "Test Bot",
-      is_bot: true,
-      username: "test_bot",
-      can_join_groups: true,
-      can_read_all_group_messages: false,
-      supports_inline_queries: false,
+  constructor(private bot: Bot<C>, user: types.User) {
+    this.user = { ...user, is_bot: false };
+    this.chat = {
+      first_name: user.first_name,
+      id: user.id,
+      type: "private",
+      last_name: user.last_name,
+      username: user.username,
     };
+
     this.bot.api.config.use((_prev, method, payload, signal) => {
       if (method.startsWith("send")) this.message_id++;
       this.incoming.push({ method, payload, signal });
