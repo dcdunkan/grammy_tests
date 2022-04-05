@@ -538,11 +538,3 @@ export class TestUser<BC extends Context> {
     if (sendStartCmd) await this.command("start");
   }
 }
-
-new TestUser(new Bot(""), {
-  first_name: "",
-  id: 2323,
-  language_code: "e",
-  last_name: "",
-  username: "",
-});

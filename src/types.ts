@@ -2,17 +2,7 @@ import { GrammyTypes } from "../deps.ts";
 
 export type User = Omit<GrammyTypes.User, "is_bot">;
 
-export interface ForwardTextMessageOptions {
-  forward_from?: GrammyTypes.User;
-  forward_date?: number;
-  forward_from_chat?: GrammyTypes.Chat;
-  forward_from_message_id?: number;
-  forward_signature?: string;
-  forward_sender_name?: string;
-  is_automatic_forward?: true;
-}
-
-export interface ForwardMessageOptions2 {
+export interface ForwardMessageOptions {
   animation?: GrammyTypes.Animation;
   audio?: GrammyTypes.Audio;
   author_signature?: string;
@@ -46,10 +36,6 @@ export interface ForwardMessageOptions2 {
   video?: GrammyTypes.Video;
   video_note?: GrammyTypes.VideoNote;
   voice?: GrammyTypes.Voice;
-}
-
-export interface ForwardMessageOptions {
-  message: GrammyTypes.Message;
 }
 
 export interface MaybeCaptioned {
