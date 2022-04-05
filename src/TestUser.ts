@@ -1,10 +1,15 @@
 // deno-lint-ignore-file no-explicit-any
 import { Bot, Context, GrammyTypes, Methods, RawApi } from "../deps.ts";
-import * as types from "./types.ts";
+import {
+  type ForwardMessageOptions,
+  ForwardTextMessageOptions,
+  type MaybeCaptioned,
+  type MaybeReplied,
+  type Misc,
+  type User,
+} from "./types.ts";
 
-/**
- * Creates a test user account.
- */
+/** Creates a test user account. */
 export class TestUser<C extends Context> {
   public readonly user: GrammyTypes.User;
   public readonly chat: GrammyTypes.Chat.PrivateChat;
@@ -26,7 +31,7 @@ export class TestUser<C extends Context> {
    * @param bot The `Bot` instance, that to be tested.
    * @param user Custom configuration for the test user.
    */
-  constructor(private bot: Bot<C>, user: types.User) {
+  constructor(private bot: Bot<C>, user: User) {
     this.user = { ...user, is_bot: false };
     this.chat = {
       first_name: user.first_name,
@@ -86,8 +91,8 @@ export class TestUser<C extends Context> {
     options:
       | string
       | { text: string; entities?: GrammyTypes.MessageEntity[] }
-        & types.MaybeReplied
-        & types.Misc,
+        & MaybeReplied
+        & Misc,
   ): Promise<GrammyTypes.Update> {
     const opts = typeof options === "string" ? { text: options } : options;
     return await this.sendUpdate({
@@ -126,7 +131,7 @@ export class TestUser<C extends Context> {
    * @returns The update sent.
    */
   async forwardMessage(
-    options: types.ForwardMessageOptions & types.ForwardTextMessageOptions,
+    options: ForwardMessageOptions & ForwardTextMessageOptions,
   ): Promise<GrammyTypes.Update> {
     return await this.sendUpdate({
       update_id: this.update_id,
@@ -159,7 +164,7 @@ export class TestUser<C extends Context> {
    */
   async forwardTextMessage(
     text = "Forwarded Message",
-    options?: types.ForwardTextMessageOptions,
+    options?: ForwardTextMessageOptions,
   ): Promise<GrammyTypes.Update> {
     return await this.forwardMessage({
       message: {
@@ -223,9 +228,9 @@ export class TestUser<C extends Context> {
   async sendAnimation(
     options:
       & { animation: GrammyTypes.Animation }
-      & types.MaybeCaptioned
-      & types.MaybeReplied
-      & types.Misc,
+      & MaybeCaptioned
+      & MaybeReplied
+      & Misc,
   ) {
     return await this.sendUpdate({
       update_id: this.update_id,
@@ -243,9 +248,9 @@ export class TestUser<C extends Context> {
   async sendAudio(
     options:
       & { audio: GrammyTypes.Audio }
-      & types.MaybeCaptioned
-      & types.MaybeReplied
-      & types.Misc,
+      & MaybeCaptioned
+      & MaybeReplied
+      & Misc,
   ) {
     return await this.sendUpdate({
       update_id: this.update_id,
@@ -263,9 +268,9 @@ export class TestUser<C extends Context> {
   async sendDocument(
     options:
       & { document: GrammyTypes.Document }
-      & types.MaybeCaptioned
-      & types.MaybeReplied
-      & types.Misc,
+      & MaybeCaptioned
+      & MaybeReplied
+      & Misc,
   ) {
     return await this.sendUpdate({
       update_id: this.update_id,
@@ -283,9 +288,9 @@ export class TestUser<C extends Context> {
   async sendPhoto(
     options:
       & { photo: GrammyTypes.PhotoSize[] }
-      & types.MaybeCaptioned
-      & types.MaybeReplied
-      & types.Misc,
+      & MaybeCaptioned
+      & MaybeReplied
+      & Misc,
   ) {
     return await this.sendUpdate({
       update_id: this.update_id,
@@ -301,7 +306,7 @@ export class TestUser<C extends Context> {
 
   /** Sends a sticker to the bot. */
   async sendSticker(
-    options: { sticker: GrammyTypes.Sticker } & types.MaybeReplied & types.Misc,
+    options: { sticker: GrammyTypes.Sticker } & MaybeReplied & Misc,
   ) {
     return await this.sendUpdate({
       update_id: this.update_id,
@@ -319,9 +324,9 @@ export class TestUser<C extends Context> {
   async sendVideo(
     options:
       & { video: GrammyTypes.Video }
-      & types.MaybeCaptioned
-      & types.MaybeReplied
-      & types.Misc,
+      & MaybeCaptioned
+      & MaybeReplied
+      & Misc,
   ) {
     return await this.sendUpdate({
       update_id: this.update_id,
@@ -339,8 +344,8 @@ export class TestUser<C extends Context> {
   async sendVideoNote(
     options:
       & { video_note: GrammyTypes.VideoNote }
-      & types.MaybeReplied
-      & types.Misc,
+      & MaybeReplied
+      & Misc,
   ) {
     return await this.sendUpdate({
       update_id: this.update_id,
@@ -358,9 +363,9 @@ export class TestUser<C extends Context> {
   async sendVoice(
     options:
       & { voice: GrammyTypes.Voice }
-      & types.MaybeCaptioned
-      & types.MaybeReplied
-      & types.Misc,
+      & MaybeCaptioned
+      & MaybeReplied
+      & Misc,
   ) {
     return await this.sendUpdate({
       update_id: this.update_id,
@@ -411,27 +416,30 @@ export class TestUser<C extends Context> {
     });
   }
 
-  // /**
-  //  * Chooses a inline result from the list of results.
-  //  * @param chosenInlineResult Inline result that user selects.
-  //  * @returns The update sent.
-  //  */
-  //  async chooseInlineResult(chosenInlineResult: GrammyTypes.ChosenInlineResult) {
-  //   return await this.sendUpdate({
-  //     update_id: this.update_id,
-  //     chosen_inline_result: chosenInlineResult,
-  //   });
-  // }
-
   async pinMessage() {
   }
 
-  async blockBot() {
-  }
-
+  /* First ever start */
   async startBot() {
   }
 
+  /* Blocking or stopping the bot. */
+  async stopBot() {
+  }
+
+  /* Stops then starts the bot. */
   async restartBot() {
   }
 }
+
+// /**
+//  * Chooses a inline result from the list of results.
+//  * @param chosenInlineResult Inline result that user selects.
+//  * @returns The update sent.
+//  */
+//  async chooseInlineResult(chosenInlineResult: GrammyTypes.ChosenInlineResult) {
+//   return await this.sendUpdate({
+//     update_id: this.update_id,
+//     chosen_inline_result: chosenInlineResult,
+//   });
+// }
