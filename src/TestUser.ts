@@ -1,37 +1,79 @@
 // deno-lint-ignore-file no-explicit-any
-import { Bot, Context, GrammyTypes, Methods, RawApi } from "../deps.ts";
+import { Bot, Context, GrammyTypes, Payload } from "../deps.ts";
+import type { Methods, RawApi } from "../deps.ts";
 import {
-  type ForwardMessageOptions,
-  ForwardTextMessageOptions,
   type MaybeCaptioned,
   type MaybeReplied,
   type Misc,
   type User,
 } from "./types.ts";
 
-/** Creates a test user account. */
-export class TestUser<C extends Context> {
+interface ForwardMessageOptions {
+  animation?: GrammyTypes.Animation;
+  audio?: GrammyTypes.Audio;
+  author_signature?: string;
+  caption?: string;
+  caption_entities?: GrammyTypes.MessageEntity[];
+  contact?: GrammyTypes.Contact;
+  dice?: GrammyTypes.Dice;
+  document?: GrammyTypes.Document;
+  edit_date?: number;
+  entities?: GrammyTypes.MessageEntity[];
+  forward_date?: number;
+  forward_from?: GrammyTypes.User;
+  forward_from_chat?: GrammyTypes.Chat;
+  forward_from_message_id?: number;
+  forward_sender_name?: string;
+  forward_signature?: string;
+  game?: GrammyTypes.Game;
+  has_protected_content?: true;
+  is_automatic_forward?: true;
+  location?: GrammyTypes.Location;
+  media_group_id?: string;
+  photo?: GrammyTypes.PhotoSize[];
+  poll?: GrammyTypes.Poll;
+  reply_markup?: GrammyTypes.InlineKeyboardMarkup;
+  reply_to_message?: GrammyTypes.ReplyMessage;
+  sender_chat?: GrammyTypes.Chat;
+  sticker?: GrammyTypes.Sticker;
+  text?: string;
+  venue?: GrammyTypes.Venue;
+  via_bot?: GrammyTypes.User;
+  video?: GrammyTypes.Video;
+  video_note?: GrammyTypes.VideoNote;
+  voice?: GrammyTypes.Voice;
+}
+
+type Options = MaybeCaptioned & MaybeReplied & Misc;
+type DefaultsOmittedMessage = Omit<
+  GrammyTypes.Message,
+  "date" | "chat" | "from" | "message_id"
+>;
+export type ApiPayload<M extends Methods<RawApi>> = Payload<M, RawApi>;
+
+/**
+ * A test user for mocking updates sent by a Telegram user or a private chat
+ */
+export class TestUser<BC extends Context> {
   public readonly user: GrammyTypes.User;
   public readonly chat: GrammyTypes.Chat.PrivateChat;
-  /** The updates sent by the user to the bot. */
-  public outgoing: GrammyTypes.Update[] = [];
-  /** The responses sent by the bot to the user. */
-  public incoming: {
+  public update_id = 100000;
+  public message_id = 2;
+
+  /** Outgoing responses from the bot */
+  public outgoing: {
     method: Methods<RawApi>;
-    payload: Record<string, any>;
-    signal: AbortSignal | undefined;
+    payload: Payload<Methods<RawApi>, RawApi>;
   }[] = [];
 
-  private update_id = 10000;
-  private message_id = 100;
+  /** Incoming requests/updates sent from the user to the bot */
+  public incoming: GrammyTypes.Update[] = [];
 
   /**
-   * Creates a test user and helps you to send mock updates as if they were sent
-   * from a private chat to the bot.
-   * @param bot The `Bot` instance, that to be tested.
-   * @param user Custom configuration for the test user.
+   * @param bot The `Bot` instance to be tested
+   * @param user Information related to the User
    */
-  constructor(private bot: Bot<C>, user: User) {
+  constructor(private bot: Bot<BC>, user: User) {
     this.user = { ...user, is_bot: false };
     this.chat = {
       first_name: user.first_name,
@@ -41,66 +83,76 @@ export class TestUser<C extends Context> {
       username: user.username,
     };
 
-    this.bot.api.config.use((_prev, method, payload, signal) => {
+    this.bot.api.config.use((_prev, method, payload) => {
+      this.outgoing.push({ method, payload });
+
+      // This is not how actually message ID increments, but this works for now
       if (method.startsWith("send")) this.message_id++;
-      this.incoming.push({ method, payload, signal });
+      else if (method.startsWith("")) this.message_id++;
+
+      // TODO: Return proper API responses
       return { ok: true, result: true } as any;
     });
   }
 
-  /** Last response from bot */
+  /** Last response from the bot  */
   get last() {
-    return this.incoming[this.incoming.length - 1];
+    return this.outgoing.at(-1);
   }
 
   /** Last sent update by the user */
-  get lastSent() {
-    return this.outgoing[this.outgoing.length - 1];
+  get lastUpdate() {
+    return this.incoming.at(-1);
   }
 
-  /** Clears the requests that the bot sent to the user. */
-  clearIncoming(): void {
-    this.incoming = [];
-  }
-
-  /** Clears the requests that the bot sent to the user. */
+  /** Clears responses from the bot */
   clearOutgoing(): void {
     this.outgoing = [];
   }
 
-  /**
-   * Alternative of `bot.handleUpdate`. Sends a custom update to the bot.
-   * @param update The custom update to be sent to the bot.
-   * @returns The update sent.
-   */
-  async sendUpdate(update: GrammyTypes.Update): Promise<GrammyTypes.Update> {
-    if ("message" in update) this.message_id++;
-    this.update_id++;
-    this.outgoing.push(update);
-    await this.bot.handleUpdate(update);
-    return update;
+  /** Clears requests sent by the user */
+  clearIncoming(): void {
+    this.incoming = [];
   }
 
   /**
-   * Mocks an incoming message update. Sends a normal text message to the bot.
-   * Helps to test `bot.hears`, `bot.on("message:text")` related updates.
-   * @param options Can be the text to send or options.
-   * @returns The update sent.
+   * Use this method to send updates to the bot.
+   * @param update The Update to send; without the `update_id` property.
    */
-  async sendMessage(
-    options:
-      | string
-      | { text: string; entities?: GrammyTypes.MessageEntity[] }
-        & MaybeReplied
-        & Misc,
+  async sendUpdate(
+    update: Omit<GrammyTypes.Update, "update_id">,
   ): Promise<GrammyTypes.Update> {
-    const opts = typeof options === "string" ? { text: options } : options;
-    return await this.sendUpdate({
-      update_id: this.update_id,
+    // TODO: Validate update.
+    const updateToSend = { ...update, update_id: this.update_id };
+    await this.bot.handleUpdate(updateToSend);
+    this.update_id++;
+    return updateToSend;
+  }
+
+  /**
+   * Use this method to send text messages. The sent Update is returned.
+   * Triggers `bot.hears`, `bot.on(":text")` like listeners.
+   *
+   * @param text Text to send.
+   * @param options Optional parameters for sending the message, such as
+   * message_id, message entities, bot information, if it was a message sent by
+   * choosing an inline result.
+   */
+  sendMessage(text: string, options?: {
+    message_id?: number;
+    entities?: GrammyTypes.MessageEntity[];
+    via_bot?: GrammyTypes.User;
+  }): Promise<GrammyTypes.Update> {
+    const opts = {
+      text: text,
+      message_id: options?.message_id ?? this.message_id,
+      ...options,
+    };
+
+    return this.sendUpdate({
       message: {
         date: Date.now(),
         chat: this.chat,
-        message_id: this.message_id,
         from: this.user,
         ...opts,
       },
@@ -108,271 +160,237 @@ export class TestUser<C extends Context> {
   }
 
   /**
-   * Mocks a bot command update. You can also provide the `match` property with
-   * the command text.
-   * @param command The command to be sent. The preceding `/` can be omitted.
-   * @returns The update sent.
+   * Use this method to reply to another message in chat.
+   * @param replyToMessage The message to reply to.
+   * @param toReply The content of the reply.
    */
-  async command(command: string): Promise<GrammyTypes.Update> {
-    const commandName = command.replace(/[^a-zA-Z1-9_]/g, " ").split(" ")[0];
-    return await this.sendMessage({
-      text: `/${command}`,
+  replyTo(
+    replyToMessage: GrammyTypes.ReplyMessage,
+    toReply: string | Omit<DefaultsOmittedMessage, "reply_to_message">,
+  ): Promise<GrammyTypes.Update> {
+    const other = typeof toReply === "string" ? { text: toReply } : toReply;
+    return this.sendUpdate({
+      message: {
+        date: Date.now(),
+        chat: this.chat,
+        from: this.user,
+        message_id: this.message_id,
+        reply_to_message: replyToMessage,
+        ...other,
+      },
+    });
+  }
+
+  /**
+   * Use this method to send a command to the bot. Triggers corresponding
+   * `bot.command()` listeners.
+   * @param command Command to send.
+   * @param match Optionally you can pass in a match/payload, an extra parameter
+   * which is sent with the command.
+   */
+  command(
+    command: string,
+    match?: string,
+  ): Promise<GrammyTypes.Update> {
+    return this.sendMessage(`/${command}${match ? ` ${match}` : ""}`, {
       entities: [{
         type: "bot_command",
         offset: 0,
-        length: 1 + commandName.length,
+        length: 1 + command.length,
       }],
     });
   }
 
   /**
-   * Mocks a message forwarding update.
-   * @param options Details about the forwarding message.
-   * @returns The update sent.
+   * Use this method to send GIF animations to the bot.
+   * @param animationOptions Information about the animation and optional parameters.
    */
-  async forwardMessage(
-    options: ForwardMessageOptions & ForwardTextMessageOptions,
+  sendAnimation(
+    animationOptions: Options & { animation: GrammyTypes.Animation },
   ): Promise<GrammyTypes.Update> {
-    return await this.sendUpdate({
-      update_id: this.update_id,
-      message: {
-        from: this.user,
-        forward_from: options?.forward_from ?? {
-          id: 1111111,
-          first_name: "Forward First name",
-          last_name: "Forward Last name",
-          language_code: "en",
-          is_bot: false,
-          username: "forwarded_from_usr",
-        },
-        forward_date: Date.now(),
-        forward_from_message_id: options?.forward_from_message_id,
-        forward_from_chat: options?.forward_from_chat,
-        forward_sender_name: options?.forward_sender_name,
-        forward_signature: options?.forward_signature,
-        is_automatic_forward: options?.is_automatic_forward,
-        ...options.message,
-      },
-    });
-  }
-
-  /**
-   * Forwards a text message to the bot.
-   * @param text The text content of the forwarding message.
-   * @param options Optional details about the forwarding message.
-   * @returns The update sent.
-   */
-  async forwardTextMessage(
-    text = "Forwarded Message",
-    options?: ForwardTextMessageOptions,
-  ): Promise<GrammyTypes.Update> {
-    return await this.forwardMessage({
+    return this.sendUpdate({
       message: {
         date: Date.now(),
         chat: this.chat,
-        message_id: this.message_id,
         from: this.user,
-        text,
+        message_id: this.message_id,
+        ...animationOptions,
       },
-      ...options,
     });
   }
 
   /**
-   * Mocks a Reply update.
-   * @param messageToReplyTo The message you are replying to.
-   * @returns The update sent.
+   * Use this method to send audio messages to the bot.
+   * @param audioOptions Information about the audio and optional parameters.
    */
-  async replyTo(
-    messageToReplyTo: GrammyTypes.ReplyMessage,
-    replyText = "Hello!",
+  sendAudio(
+    audioOptions: Options & { audio: GrammyTypes.Audio },
   ): Promise<GrammyTypes.Update> {
-    return await this.sendUpdate({
-      update_id: this.update_id,
+    return this.sendUpdate({
       message: {
         date: Date.now(),
         chat: this.chat,
-        message_id: this.message_id,
         from: this.user,
-        text: replyText,
-        reply_to_message: messageToReplyTo,
+        message_id: this.message_id,
+        ...audioOptions,
       },
     });
   }
 
   /**
-   * Sends a edited message update.
-   * @param message The message you want to edit.
-   * @returns The update sent.
+   * Use this method to send documents and files to the bot.
+   * @param documentOptions Information about the document and optional parameters.
    */
-  async editMessage(message: GrammyTypes.Message): Promise<GrammyTypes.Update> {
-    return await this.sendUpdate({
-      update_id: this.update_id,
+  sendDocument(
+    documentOptions: Options & { document: GrammyTypes.Document },
+  ): Promise<GrammyTypes.Update> {
+    return this.sendUpdate({
+      message: {
+        date: Date.now(),
+        chat: this.chat,
+        from: this.user,
+        message_id: this.message_id,
+        ...documentOptions,
+      },
+    });
+  }
+
+  /**
+   * Use this method to send photos to the bot.
+   * @param photoOptions Information about the photo and optional parameters.
+   */
+  sendPhoto(
+    photoOptions: Options & { photo: GrammyTypes.PhotoSize[] },
+  ): Promise<GrammyTypes.Update> {
+    return this.sendUpdate({
+      message: {
+        date: Date.now(),
+        chat: this.chat,
+        from: this.user,
+        message_id: this.message_id,
+        ...photoOptions,
+      },
+    });
+  }
+
+  /**
+   * Use this method to send sticker messages to the bot.
+   * @param stickerOptions Information about the sticker and optional parameters.
+   */
+  sendSticker(
+    stickerOptions: { sticker: GrammyTypes.Sticker } & MaybeReplied & Misc,
+  ): Promise<GrammyTypes.Update> {
+    return this.sendUpdate({
+      message: {
+        date: Date.now(),
+        chat: this.chat,
+        from: this.user,
+        message_id: this.message_id,
+        ...stickerOptions,
+      },
+    });
+  }
+
+  /**
+   * Use this method to send videos to the bot.
+   * @param videoOptions Information about the video and optional parameters.
+   */
+  sendVideo(
+    videoOptions: Options & { video: GrammyTypes.Video },
+  ): Promise<GrammyTypes.Update> {
+    return this.sendUpdate({
+      message: {
+        date: Date.now(),
+        chat: this.chat,
+        from: this.user,
+        message_id: this.message_id,
+        ...videoOptions,
+      },
+    });
+  }
+
+  /**
+   * Use this method to send video notes to the bot.
+   * @param videoNoteOptions Information about the video note and optional parameters.
+   */
+  sendVideoNote(
+    videoNoteOptions:
+      & { video_note: GrammyTypes.VideoNote }
+      & MaybeReplied
+      & Misc,
+  ): Promise<GrammyTypes.Update> {
+    return this.sendUpdate({
+      message: {
+        date: Date.now(),
+        chat: this.chat,
+        from: this.user,
+        message_id: this.message_id,
+        ...videoNoteOptions,
+      },
+    });
+  }
+
+  /**
+   * Use this method to send voice messages to the bot.
+   * @param voiceOptions Information about the voice message and optional parameters.
+   */
+  sendVoice(
+    voiceOptions: Options & { voice: GrammyTypes.Voice },
+  ): Promise<GrammyTypes.Update> {
+    return this.sendUpdate({
+      message: {
+        date: Date.now(),
+        chat: this.chat,
+        from: this.user,
+        message_id: this.message_id,
+        ...voiceOptions,
+      },
+    });
+  }
+
+  /**
+   * Use this method to edit a message.
+   * @param message Message to edit.
+   */
+  editMessage(
+    message: GrammyTypes.Message,
+  ): Promise<GrammyTypes.Update> {
+    return this.sendUpdate({
       edited_message: message,
     });
   }
 
-  /** Edit a text message's text */
-  async editMessageText(text: string): Promise<GrammyTypes.Update> {
-    return await this.editMessage({
-      date: Date.now() - 2000,
+  /**
+   * Use this method to edit a message's text.
+   * @param message_id ID of the text message to edit.
+   * @param text New text content of the message.
+   */
+  editMessageText(
+    message_id: number,
+    text: string,
+  ): Promise<GrammyTypes.Update> {
+    return this.editMessage({
+      date: Date.now(),
       chat: this.chat,
       from: this.user,
-      message_id: this.message_id,
-      text,
       edit_date: Date.now(),
+      message_id,
+      text,
     });
   }
 
-  /** Sends a animation to the bot. */
-  async sendAnimation(
-    options:
-      & { animation: GrammyTypes.Animation }
-      & MaybeCaptioned
-      & MaybeReplied
-      & Misc,
-  ) {
-    return await this.sendUpdate({
-      update_id: this.update_id,
+  /**
+   * Use this method to forward a message to the bot.
+   * @param options Information of the forwarding message.
+   */
+  forwardMessage(
+    options: ForwardMessageOptions,
+  ): Promise<GrammyTypes.Update> {
+    return this.sendUpdate({
       message: {
         date: Date.now(),
-        chat: this.chat,
         from: this.user,
-        message_id: this.message_id,
-        ...options,
-      },
-    });
-  }
-
-  /** Sends a audio to the bot. */
-  async sendAudio(
-    options:
-      & { audio: GrammyTypes.Audio }
-      & MaybeCaptioned
-      & MaybeReplied
-      & Misc,
-  ) {
-    return await this.sendUpdate({
-      update_id: this.update_id,
-      message: {
-        date: Date.now(),
         chat: this.chat,
-        from: this.user,
-        message_id: this.message_id,
-        ...options,
-      },
-    });
-  }
-
-  /** Sends a document to the bot. */
-  async sendDocument(
-    options:
-      & { document: GrammyTypes.Document }
-      & MaybeCaptioned
-      & MaybeReplied
-      & Misc,
-  ) {
-    return await this.sendUpdate({
-      update_id: this.update_id,
-      message: {
-        date: Date.now(),
-        chat: this.chat,
-        from: this.user,
-        message_id: this.message_id,
-        ...options,
-      },
-    });
-  }
-
-  /** Sends a photo to the bot. */
-  async sendPhoto(
-    options:
-      & { photo: GrammyTypes.PhotoSize[] }
-      & MaybeCaptioned
-      & MaybeReplied
-      & Misc,
-  ) {
-    return await this.sendUpdate({
-      update_id: this.update_id,
-      message: {
-        date: Date.now(),
-        chat: this.chat,
-        from: this.user,
-        message_id: this.message_id,
-        ...options,
-      },
-    });
-  }
-
-  /** Sends a sticker to the bot. */
-  async sendSticker(
-    options: { sticker: GrammyTypes.Sticker } & MaybeReplied & Misc,
-  ) {
-    return await this.sendUpdate({
-      update_id: this.update_id,
-      message: {
-        date: Date.now(),
-        chat: this.chat,
-        from: this.user,
-        message_id: this.message_id,
-        ...options,
-      },
-    });
-  }
-
-  /** Sends a video to the bot. */
-  async sendVideo(
-    options:
-      & { video: GrammyTypes.Video }
-      & MaybeCaptioned
-      & MaybeReplied
-      & Misc,
-  ) {
-    return await this.sendUpdate({
-      update_id: this.update_id,
-      message: {
-        date: Date.now(),
-        chat: this.chat,
-        from: this.user,
-        message_id: this.message_id,
-        ...options,
-      },
-    });
-  }
-
-  /** Sends a video note to the bot. */
-  async sendVideoNote(
-    options:
-      & { video_note: GrammyTypes.VideoNote }
-      & MaybeReplied
-      & Misc,
-  ) {
-    return await this.sendUpdate({
-      update_id: this.update_id,
-      message: {
-        date: Date.now(),
-        chat: this.chat,
-        from: this.user,
-        message_id: this.message_id,
-        ...options,
-      },
-    });
-  }
-
-  /** Sends a voice message to the bot. */
-  async sendVoice(
-    options:
-      & { voice: GrammyTypes.Voice }
-      & MaybeCaptioned
-      & MaybeReplied
-      & Misc,
-  ) {
-    return await this.sendUpdate({
-      update_id: this.update_id,
-      message: {
-        date: Date.now(),
-        chat: this.chat,
-        from: this.user,
         message_id: this.message_id,
         ...options,
       },
@@ -380,66 +398,151 @@ export class TestUser<C extends Context> {
   }
 
   /**
-   * Sends a inline query update to the bot.
-   * @param query The query.
-   * @param offset Offset of the query.
-   * @returns The update sent.
+   * Use this method to forward a text message to the bot.
+   * @param text Text of the forwarding message.
+   * @param entities Optional message entities array.
    */
-  async inlineQuery(query = "", offset = "") {
-    return await this.sendUpdate({
-      update_id: this.update_id,
-      inline_query: {
-        id: "134567890097",
+  forwardTextMessage(
+    text: string,
+    entities?: GrammyTypes.MessageEntity[],
+  ): Promise<GrammyTypes.Update> {
+    return this.forwardMessage({ text, entities });
+  }
+
+  /**
+   * Use this method to query inline.
+   * @param query Query string. Defaults to an empty string.
+   * @param options Additional information about the query.
+   */
+  inlineQuery(
+    query = "",
+    options = { offset: "", id: "1234567890" },
+  ): Promise<GrammyTypes.Update> {
+    return this.sendUpdate({
+      inline_query: { query, ...options, from: this.user },
+    });
+  }
+
+  // TODO: Implement `chooseInlineResult`.
+
+  /**
+   * Use this method to click an inline button.
+   * @param callbackQuery The callback data of the inline button.
+   */
+  click(
+    callbackQuery: string | GrammyTypes.CallbackQuery,
+  ): Promise<GrammyTypes.Update> {
+    const callback_query = typeof callbackQuery === "string"
+      ? {
+        id: "1234567890",
+        chat_instance: "1234567890",
+        data: callbackQuery,
         from: this.user,
-        query,
-        offset,
+      }
+      : callbackQuery;
+
+    return this.sendUpdate({ callback_query });
+  }
+
+  /**
+   * Use this method to pin a message in chat.
+   * @param message The message to be pin in chat.
+   */
+  pinMessage(
+    message: GrammyTypes.ReplyMessage,
+  ): Promise<GrammyTypes.Update> {
+    return this.sendUpdate({
+      message: {
+        date: Date.now(),
+        chat: this.chat,
+        from: this.user,
+        message_id: this.message_id,
+        pinned_message: message,
       },
     });
   }
 
   /**
-   * Mocks a update that user clicking a inline button.
-   * @param callbackQuery The callback query. Or just the callback data.
-   * @returns The update sent.
+   * Short method for sending start command; or, in other words, starting a
+   * conversation with the bot.
+   * @param options Optional information for the start command.
    */
-  async clicks(callbackQuery: string | GrammyTypes.CallbackQuery) {
-    return await this.sendUpdate({
-      update_id: this.update_id,
-      callback_query: typeof callbackQuery === "string"
-        ? {
-          chat_instance: "3131313",
-          from: this.user,
-          id: "313131",
-          data: callbackQuery,
-        }
-        : callbackQuery,
+  startBot(
+    options?: {
+      /** /start command payload (match) */
+      payload?: string;
+      /** Whether it is the first ever `/start` command to the bot */
+      first_start?: boolean;
+    },
+  ) {
+    if (!options) return this.command("start");
+    this.sendMessage(
+      `/start${options.payload ? ` ${options.payload}` : ""}`,
+      {
+        entities: [{ type: "bot_command", offset: 0, length: 6 }],
+        message_id: options.first_start ? 1 : this.message_id,
+      },
+    );
+  }
+
+  /**
+   * Use this method to block or stop the bot. The bot will no longer be able to
+   * send messages if it is blocked by the user.
+   */
+  stopBot() {
+    return this.sendUpdate({
+      my_chat_member: {
+        date: Date.now(),
+        chat: this.chat,
+        from: this.user,
+        old_chat_member: {
+          user: this.user,
+          status: "member",
+        },
+        new_chat_member: {
+          user: this.user,
+          status: "kicked",
+          until_date: 0,
+        },
+      },
     });
   }
 
-  async pinMessage() {
-  }
+  /**
+   * Use this method to restart the bot if it has been blocked or
+   * stopped by the user.
+   */
+  async restartBot({ sendStartCmd = true }: {
+    /** Whether a start command should be sent after unblocking/restarting the bot */
+    sendStartCmd: boolean;
+  }) {
+    await this.sendUpdate({
+      my_chat_member: {
+        date: Date.now(),
+        chat: this.chat,
+        from: this.user,
+        old_chat_member: {
+          user: this.user,
+          status: "kicked",
+          until_date: 0,
+        },
+        new_chat_member: {
+          user: this.user,
+          status: "member",
+        },
+      },
+    });
 
-  /* First ever start */
-  async startBot() {
-  }
-
-  /* Blocking or stopping the bot. */
-  async stopBot() {
-  }
-
-  /* Stops then starts the bot. */
-  async restartBot() {
+    // Clicking "Restart Bot" button, also sends a '/start' command
+    // in Official Telegram Clients. Set `sendStartCmd` to false, to disable.
+    if (sendStartCmd) await this.command("start");
   }
 }
 
-// /**
-//  * Chooses a inline result from the list of results.
-//  * @param chosenInlineResult Inline result that user selects.
-//  * @returns The update sent.
-//  */
-//  async chooseInlineResult(chosenInlineResult: GrammyTypes.ChosenInlineResult) {
-//   return await this.sendUpdate({
-//     update_id: this.update_id,
-//     chosen_inline_result: chosenInlineResult,
-//   });
-// }
+new TestUser(new Bot(""), {
+  first_name: "",
+  id: 2323,
+  language_code: "e",
+  last_name: "",
+  username: "",
+});

@@ -24,4 +24,8 @@ export class Chats<BC extends Context = Context> {
   newUser(user: User): TestUser<BC> {
     return new TestUser<BC>(this.bot, user);
   }
+
+  newTUser(user: User): TestUser<BC> {
+    return new TestUser<BC>(this.bot, user);
+  }
 }
