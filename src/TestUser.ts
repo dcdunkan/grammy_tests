@@ -137,7 +137,7 @@ export class TestUser<BC extends Context> {
    * @param toReply The content of the reply.
    */
   replyTo(
-    replyToMessage: Omit<GrammyTypes.ReplyMessage, "reply_to_message">,
+    replyToMessage: GrammyTypes.Message,
     toReply: string | Omit<DefaultsOmittedMessage, "reply_to_message">,
   ): Promise<GrammyTypes.Update> {
     const other = typeof toReply === "string" ? { text: toReply } : toReply;
