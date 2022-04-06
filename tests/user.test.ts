@@ -1,186 +1,165 @@
 import { bot, MyContext } from "./bot.ts";
-import { Chats } from "../mod.ts";
-import { assertEquals } from "https://deno.land/std@0.127.0/testing/asserts.ts";
+import { /* ApiPayload, */ Chats } from "../mod.ts";
+import { assertEquals } from "https://deno.land/std@0.133.0/testing/asserts.ts";
 
 const chats = new Chats<MyContext>(bot);
-
 const user = chats.newUser({
-  first_name: "Test user",
   id: 1234567890,
+  first_name: "Test",
+  last_name: "User",
+  username: "test_usr",
+  language_code: "en",
 });
 
-Deno.test("hello-hi", async (t) => {
-  await t.step("hello", async () => {
+Deno.test("Handle Commands and Hi message", async ({ step }) => {
+  await step("/start Command", async () => {
     await user.command("start");
-    assertEquals(user.last.payload.text, "Hello there!");
+    // const payload = user.last as ApiPayload<"sendMessage">;
+    assertEquals(user.last.text, "Hello there!");
   });
 
-  await t.step("hi", async () => {
+  await step("Reply 'Hi!' to 'Hi'", async () => {
     await user.sendMessage("Hi");
-    assertEquals(user.last.payload.text, "Hi!");
+    assertEquals(user.last.text, "Hi!");
   });
 
-  user.clearIncoming();
-  user.clearOutgoing();
+  user.clear();
 });
 
-Deno.test("message counter", async (t) => {
-  await t.step("increase counter to 3", async () => {
-    await user.sendMessage("blah");
-    assertEquals(user.last.payload.text, "1");
-    await user.sendMessage("blah");
-    await user.sendMessage("blah");
+Deno.test("Message Counter (Session usage)", async ({ step }) => {
+  await step("Set count to 3", async () => {
+    await user.sendMessage("Message 1");
+    await user.sendMessage("Message 2");
+    await user.sendMessage("Message 3");
 
-    assertEquals(user.outgoing.length, 3);
-    assertEquals(user.incoming.length, 3);
+    assertEquals(user.updates.length, 3);
+    assertEquals(user.responses.length, 3);
   });
 
-  await t.step("reset", async () => {
+  await step("Reset count command", async () => {
     await user.command("reset");
-    assertEquals(user.last.payload.text, "Reset!");
+    assertEquals(user.last.text, "Reset!");
   });
 
-  await t.step("increase after resetting", async () => {
-    await user.sendMessage("blah");
-    assertEquals(user.last.payload.text, "1");
+  await step("Increase count after resetting", async () => {
+    await user.sendMessage("Message (again)");
+    assertEquals(user.last.text, "1");
+
     await user.command("reset");
-    assertEquals(user.last.payload.text, "Reset!");
+    assertEquals(user.last.text, "Reset!");
   });
 
-  assertEquals(user.outgoing.length, 6);
-  assertEquals(user.incoming.length, 6);
-  user.clearIncoming();
-  user.clearOutgoing();
+  assertEquals(user.updates.length, 6);
+  assertEquals(user.responses.length, 6);
+
+  user.clear();
 
   // If the reset was already called, the bot sends two messages -->
-  // 1. "Reset!" 2. "(It was, already!)".
-  await t.step("reset again", async () => {
+  // 1. "Reset!"; and 2. "(It was, already!)".
+  await step("Reset again when already reset", async () => {
     await user.command("reset");
 
-    assertEquals(
-      user.incoming[user.incoming.length - 2].payload.text,
-      "Reset!",
-    );
-    assertEquals(user.last.payload.text, "(It was, already!)");
+    assertEquals(user.responses.at(-2)?.payload.text, "Reset!");
+    assertEquals(user.last.text, "(It was, already!)");
   });
 
-  assertEquals(user.outgoing.length, 1);
-  assertEquals(user.incoming.length, 2); // + 1 because double replies from last /reset.
-  user.clearIncoming();
-  user.clearOutgoing();
+  assertEquals(user.updates.length, 1);
+  assertEquals(user.responses.length, 2); // 2, because bot sends 2 messages here.
+
+  user.clear();
 });
 
-Deno.test("forwarded messages", async (t) => {
-  await t.step("text from user", async () => {
-    await user.forwardTextMessage();
-    const id = user.lastSent.message?.forward_from?.id;
-    assertEquals(user.last.payload.text, `It's forwarded from ${id}, right?`);
+Deno.test("Handle forwarded messages", async ({ step }) => {
+  await step("Forward: Text message from a user", async () => {
+    const text = "Forwarding message text content";
+    await user.forwardTextMessage(text);
+
+    assertEquals(user.last.text, `It says: "${text}" here.`);
   });
 
-  await t.step("photo from a custom user", async () => {
+  await step("Forward: Photo from a specific user", async () => {
     await user.forwardMessage({
+      photo: [{
+        file_id: "photo_file_id",
+        file_unique_id: "photo_file_unique_id",
+        height: 1920,
+        width: 1080,
+        file_size: 123456,
+      }],
       forward_from: {
+        id: 123,
         first_name: "Another user",
-        id: 14141414141,
         is_bot: false,
       },
-      message: {
-        chat: user.chat,
-        date: Date.now(),
-        message_id: 10000,
-        photo: [{
-          file_id: "hgbfbfiebfeijfbef",
-          file_unique_id: "ewfvewfibfiewbfeifbvefi",
-          height: 1920,
-          width: 1080,
-          file_size: 2573234,
-        }],
-      },
     });
 
-    assertEquals(
-      user.last.payload.text,
-      `It's forwarded from 14141414141, right?`,
-    );
+    assertEquals(user.last.text, "It's from 123");
   });
 
-  await t.step("text from bot", async () => {
+  await step("Forward: Text from bot", async () => {
     await user.forwardMessage({
+      text: "Hey bot!",
       forward_from: {
+        id: 234,
+        first_name: "Another bot",
+        username: "another_bot",
         is_bot: true,
-        first_name: "A bot",
-        id: 14562378,
-        username: "fwd_msgs_from_bot",
-      },
-      message: {
-        chat: user.chat,
-        date: Date.now(),
-        message_id: 10000,
-        text: "Hey bot!",
       },
     });
 
     assertEquals(
-      user.last.payload.text,
+      user.last.text,
       "It's from... a bot?",
     );
   });
 
-  assertEquals(user.incoming.length, 3);
-  user.clearIncoming();
-  user.clearOutgoing();
+  assertEquals(user.responses.length, 3);
+  user.clear();
 });
 
-Deno.test("reply to message", async () => {
+Deno.test("Reply to message", async () => {
   await user.replyTo({
-    reply_to_message: undefined,
     chat: user.chat,
     date: Date.now(),
     message_id: 333,
+  }, {
+    text: "Reply message text",
   });
 
-  assertEquals(
-    user.last.payload.text,
-    `You are replying to 333`,
-  );
-
-  user.clearIncoming();
-  user.clearOutgoing();
+  assertEquals(user.last.text, "You are replying to 333");
+  user.clear();
 });
 
-Deno.test("edited message", async (t) => {
-  await t.step("message text", async () => {
-    await user.editMessageText("Yeshh");
-    assertEquals(
-      user.last.payload.text,
-      `You edited: ${user.lastSent.edited_message?.message_id}`,
-    );
+Deno.test("Handle edited messages", async ({ step }) => {
+  await step("Edit: Text message", async () => {
+    await user.editMessageText(111, "Yes");
+    assertEquals(user.last.text, `You edited: 111`);
   });
 
-  await t.step("edit photo", async () => {
+  await step("Edit: Photo", async () => {
+    // Example of getting the update.
     const { edited_message } = await user.editMessage({
       date: Date.now() - 2000,
       chat: user.chat,
       from: user.user,
-      message_id: 1365,
-      photo: [{ file_id: "dd", file_unique_id: "df", height: 33, width: 33 }],
+      message_id: 112,
+      photo: [{ file_id: "id", file_unique_id: "id", height: 33, width: 33 }],
       edit_date: Date.now(),
     });
     assertEquals(
-      user.last.payload.text,
-      `That's an edited picture in ${edited_message?.message_id}`,
+      user.last.text,
+      `Now, that's an edited picture in ${edited_message?.message_id}`,
     );
   });
 
-  assertEquals(user.incoming.length, 2);
-  assertEquals(user.outgoing.length, 2);
+  assertEquals(user.responses.length, 2);
+  assertEquals(user.updates.length, 2);
 
-  user.clearIncoming();
-  user.clearOutgoing();
+  user.clear();
 });
 
-Deno.test("media handling", async (t) => {
-  await t.step("animation", async () => {
+Deno.test("Handling medias", async ({ step }) => {
+  await step("Media: Animation", async () => {
     await user.sendAnimation({
       animation: {
         duration: 10,
@@ -190,10 +169,10 @@ Deno.test("media handling", async (t) => {
         width: 240,
       },
     });
-    assertEquals(user.last.payload.text, "That's a cool animation!");
+    assertEquals(user.last.text, "That's a cool animation!");
   });
 
-  await t.step("audio", async () => {
+  await step("Media: Audio", async () => {
     await user.sendAudio({
       audio: {
         duration: 10,
@@ -201,23 +180,20 @@ Deno.test("media handling", async (t) => {
         file_unique_id: "file_unique_id",
       },
     });
-    assertEquals(user.last.payload.text, "That song hits different.");
+    assertEquals(user.last.text, "Is that a new song?");
   });
 
-  await t.step("document", async () => {
+  await step("Media: Document", async () => {
     await user.sendDocument({
       document: {
         file_id: "file_id",
         file_unique_id: "file_unique_id",
       },
     });
-    assertEquals(
-      user.last.payload.text,
-      "What's that? Wait a sec. Let me check it.",
-    );
+    assertEquals(user.last.text, "What's that? Wait a sec. Let me check it.");
   });
 
-  await t.step("photo", async () => {
+  await step("Media: Photo", async () => {
     await user.sendPhoto({
       photo: [{
         file_id: "file_id",
@@ -226,13 +202,10 @@ Deno.test("media handling", async (t) => {
         width: 1080,
       }],
     });
-    assertEquals(
-      user.last.payload.text,
-      "Let me process the photo. Please wait...",
-    );
+    assertEquals(user.last.text, "Let me process the photo. Please wait...");
   });
 
-  await t.step("photo (higher than height limit)", async () => {
+  await step("Media: Photo (height > 1920)", async () => {
     await user.sendPhoto({
       photo: [{
         file_id: "file_id",
@@ -241,16 +214,13 @@ Deno.test("media handling", async (t) => {
         width: 1080,
       }],
     });
-    assertEquals(
-      user.last.payload.text,
-      "I can't process images that big!",
-    );
+    assertEquals(user.last.text, "I can't process images that big!");
   });
 
-  await t.step("sticker", async () => {
+  await step("Media: Sticker", async () => {
     await user.sendSticker({
       sticker: {
-        file_id: "file_id",
+        file_id: "Media: file_id",
         file_unique_id: "file_unique_id",
         height: 320,
         width: 240,
@@ -259,17 +229,14 @@ Deno.test("media handling", async (t) => {
       },
     });
     assertEquals(
-      user.incoming[user.incoming.length - 2].payload.text,
+      user.responses[user.responses.length - 2].payload.text,
       "I got another one, here we go!",
     );
 
-    assertEquals(
-      user.last.payload.sticker,
-      "sticker_id",
-    );
+    assertEquals(user.last.sticker, "sticker_id");
   });
 
-  await t.step("video", async () => {
+  await step("Media: Video", async () => {
     await user.sendVideo({
       video: {
         duration: 90,
@@ -279,10 +246,10 @@ Deno.test("media handling", async (t) => {
         width: 240,
       },
     });
-    assertEquals(user.last.payload.text, "Oh, you! You rickrolled me again!");
+    assertEquals(user.last.text, "Oh, you! You rickrolled me again!");
   });
 
-  await t.step("video_note", async () => {
+  await step("Media: Video note", async () => {
     await user.sendVideoNote({
       video_note: {
         duration: 90,
@@ -291,10 +258,10 @@ Deno.test("media handling", async (t) => {
         length: 30,
       },
     });
-    assertEquals(user.last.payload.text, "Did you trimmed your beard?");
+    assertEquals(user.last.text, "Did you trimmed your beard?");
   });
 
-  await t.step("animation", async () => {
+  await step("Media: Voice", async () => {
     await user.sendVoice({
       voice: {
         duration: 90,
@@ -302,50 +269,34 @@ Deno.test("media handling", async (t) => {
         file_unique_id: "file_unique_id",
       },
     });
-    assertEquals(
-      user.last.payload.text,
-      "Your voice is actually pretty good, I liked it.",
-    );
+    assertEquals(user.last.text, "Your voice is so bold");
   });
 
-  assertEquals(user.outgoing.length, 9);
-  assertEquals(user.incoming.length, 10);
+  assertEquals(user.updates.length, 9);
+  assertEquals(user.responses.length, 10);
 
-  user.clearIncoming();
-  user.clearOutgoing();
+  user.clear();
 });
 
-Deno.test("inline query", async (t) => {
-  await t.step("query", async () => {
+Deno.test("Inline Query", async ({ step }) => {
+  await step("Query", async () => {
     await user.inlineQuery();
-    assertEquals(user.last.payload.results[0].id, "grammy-website");
   });
 
-  assertEquals(user.incoming.length, 1);
+  assertEquals(user.last.results[0].id, "grammy-website");
+  assertEquals(user.responses.length, 1);
 
-  // await t.step("choose", async () => {
-  //   await user.chooseInlineResult({
-  //     from: user.user,
-  //     query: "",
-  //     result_id: "grammy-website",
-  //     inline_message_id: "330",
-  //   });
-  //   assertEquals(user.last.payload.text, "You chose: grammy-website");
-  // });
-
-  user.clearIncoming();
-  user.clearOutgoing();
+  user.clear();
 });
 
-Deno.test("callback query", async (t) => {
-  await t.step("click cb data", async () => {
-    await user.clicks("click-me");
-    assertEquals(user.last.payload.text, "Nothing here :)");
+Deno.test("Callback Query and buttons", async ({ step }) => {
+  await step("Clicking 'click-me' button", async () => {
+    await user.click("click-me");
+    assertEquals(user.last.text, "Nothing here :)");
   });
 
-  assertEquals(user.outgoing.length, 1);
-  assertEquals(user.incoming.length, 1);
+  assertEquals(user.updates.length, 1);
+  assertEquals(user.responses.length, 1);
 
-  user.clearOutgoing();
-  user.clearIncoming();
+  user.clear();
 });

@@ -25,13 +25,14 @@ export class TestUser<BC extends Context> {
   public message_id = 2;
 
   /** Outgoing responses from the bot */
-  public outgoing: {
+  public responses: {
     method: Methods<RawApi>;
-    payload: Payload<Methods<RawApi>, RawApi>;
+    payload: Record<string, any>;
+    // Payload<Methods<RawApi>, RawApi>;
   }[] = [];
 
   /** Incoming requests/updates sent from the user to the bot */
-  public incoming: GrammyTypes.Update[] = [];
+  public updates: GrammyTypes.Update[] = [];
 
   /**
    * @param bot The `Bot` instance to be tested
@@ -48,7 +49,7 @@ export class TestUser<BC extends Context> {
     };
 
     this.bot.api.config.use((_prev, method, payload) => {
-      this.outgoing.push({ method, payload });
+      this.responses.push({ method, payload });
 
       // This is not how actually message ID increments, but this works for now
       if (method.startsWith("send")) this.message_id++;
@@ -59,24 +60,30 @@ export class TestUser<BC extends Context> {
     });
   }
 
-  /** Last response from the bot  */
-  get last() {
-    return this.outgoing.at(-1);
-  }
-
   /** Last sent update by the user */
   get lastUpdate() {
-    return this.incoming.at(-1);
+    return this.updates[this.updates.length - 1];
+  }
+
+  /** Payload of last response from the bot  */
+  get last() {
+    return this.responses[this.responses.length - 1].payload;
+  }
+
+  /** Clears updates (requests) sent by the user */
+  clearIncoming(): void {
+    this.updates = [];
   }
 
   /** Clears responses from the bot */
   clearOutgoing(): void {
-    this.outgoing = [];
+    this.responses = [];
   }
 
-  /** Clears requests sent by the user */
-  clearIncoming(): void {
-    this.incoming = [];
+  /** Clears both updates and responses */
+  clear(): void {
+    this.responses = [];
+    this.updates = [];
   }
 
   /**
@@ -89,6 +96,7 @@ export class TestUser<BC extends Context> {
     // TODO: Validate update.
     const updateToSend = { ...update, update_id: this.update_id };
     await this.bot.handleUpdate(updateToSend);
+    this.updates.push(updateToSend);
     this.update_id++;
     return updateToSend;
   }
@@ -129,7 +137,7 @@ export class TestUser<BC extends Context> {
    * @param toReply The content of the reply.
    */
   replyTo(
-    replyToMessage: GrammyTypes.ReplyMessage,
+    replyToMessage: Omit<GrammyTypes.ReplyMessage, "reply_to_message">,
     toReply: string | Omit<DefaultsOmittedMessage, "reply_to_message">,
   ): Promise<GrammyTypes.Update> {
     const other = typeof toReply === "string" ? { text: toReply } : toReply;
@@ -139,7 +147,10 @@ export class TestUser<BC extends Context> {
         chat: this.chat,
         from: this.user,
         message_id: this.message_id,
-        reply_to_message: replyToMessage,
+        reply_to_message: {
+          ...replyToMessage,
+          reply_to_message: undefined,
+        },
         ...other,
       },
     });
@@ -356,6 +367,7 @@ export class TestUser<BC extends Context> {
         from: this.user,
         chat: this.chat,
         message_id: this.message_id,
+        forward_date: Date.now(),
         ...options,
       },
     });

@@ -1,6 +1,6 @@
 import { Bot, Context as BaseC, session, SessionFlavor } from "./test_deps.ts";
 export type MyContext = BaseC & SessionFlavor<{ counter: number }>;
-export const bot = new Bot<MyContext>(Deno.env.get("BOT_TOKEN")!);
+export const bot = new Bot<MyContext>("TEST_TOKEN");
 
 bot.use(session({
   initial: () => ({ counter: 0 }),
@@ -27,14 +27,17 @@ bot.on("msg:forward_date", async (ctx) => {
   if (ctx.message?.forward_from?.is_bot) {
     return await ctx.reply("It's from... a bot?");
   }
+  if (ctx.message?.forward_from?.id) {
+    return await ctx.reply(`It's from ${ctx.message.forward_from.id}`);
+  }
   await ctx.reply(
-    `It's forwarded from ${ctx.message?.forward_from?.id}, right?`,
+    `It says: "${ctx.message?.text}" here.`,
   );
 });
 
 bot.on("edited_message:photo", async (ctx) => {
   await ctx.reply(
-    `That's an edited picture in ${ctx.editedMessage.message_id}`,
+    `Now, that's an edited picture in ${ctx.editedMessage.message_id}`,
   );
 });
 
@@ -53,7 +56,7 @@ bot.on("message:animation", async (ctx) => {
 });
 
 bot.on("message:audio", async (ctx) => {
-  await ctx.reply("That song hits different.");
+  await ctx.reply("Is that a new song?");
 });
 
 bot.on("message:document", async (ctx) => {
@@ -81,7 +84,7 @@ bot.on("message:video_note", async (ctx) => {
 });
 
 bot.on("message:voice", async (ctx) => {
-  await ctx.reply("Your voice is actually pretty good, I liked it.");
+  await ctx.reply("Your voice is so bold");
 });
 
 bot.on("message", async (ctx, next) => {
@@ -115,10 +118,10 @@ They even have a pretty website! 👇",
 
 // Not commonly used, and you need to enable "Inline Feedback" feature for your
 // bot in the settings of BotFather. So, there is no proper test.
-bot.on("chosen_inline_result", async (ctx) => {
-  console.log(ctx.chosenInlineResult);
-  await ctx.reply(`You chose: ${ctx.chosenInlineResult.result_id}`);
-});
+// bot.on("chosen_inline_result", async (ctx) => {
+//   console.log(ctx.chosenInlineResult);
+//   await ctx.reply(`You chose: ${ctx.chosenInlineResult.result_id}`);
+// });
 
 bot.callbackQuery("click-me", async (ctx) => {
   await ctx.answerCallbackQuery("Nothing here :)");
