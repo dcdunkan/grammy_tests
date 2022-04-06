@@ -1,4 +1,4 @@
-# 🧪 grammY Tests
+<h1 align="center">🧪 grammY Tests</h1>
 
 **Work in progress!**
 
@@ -6,8 +6,8 @@ Testing framework for Telegram bots written using [grammY](https://grammy.dev).
 Written in [TypeScript](https://typescript.org) and [Deno](https://deno.land/).
 
 Check out the test examples in the [tests](/tests/) folder. The file
-[bot.ts](/tests/bot.ts) contains the logic of the bot we want to write tests
-for. [user.test.ts](/tests/user.test.ts) has an example of
+[bot.ts](/tests/bot.ts) contains an example logic of the bot we want to write
+tests for. [user.test.ts](/tests/user.test.ts) has an example of
 [test user instance](#testuser), which sends fake updates and checks whether
 your bot replies as expected or not.
 
@@ -15,7 +15,32 @@ your bot replies as expected or not.
 
 Export the
 [`Bot`](https://doc.deno.land/https://deno.land/x/grammy/mod.ts/~/Bot) instance
-you created, and import to the test file.
+you created.
+
+```ts
+import { Bot } from "https://deno.land/x/grammy/mod.ts";
+export const bot = new Bot("BOT_TOKEN");
+// ...Your bot's handlers and logic goes here.
+```
+
+For now, consider the following simple program as the bot's logic.
+
+```ts
+bot.command("start", async (ctx) => {
+  await ctx.reply("Hello there!");
+});
+
+bot.hears("Hi", async (ctx) => {
+  await ctx.reply("Hi!");
+});
+```
+
+Now the bot we are testing has a start command handler which replies "Hello
+there!" and a "Hi" listener which says "Hi!" back.
+
+But, to make sure that our bot works as we want it to be, let's add some tests.
+
+First, Import the bot object we created first to the test file.
 
 ```ts
 import { bot } from "./path/to/your/bot/file.ts";
@@ -34,86 +59,81 @@ const chats = new Chats(bot);
 const user = chats.newUser({
   id: 1234567890,
   first_name: "Test user",
-  username: "testuser",
+  username: "test_user",
 });
 ```
 
-Consider the following simple program as the bot's logic.
-
-```ts
-bot.command("start", async (ctx) => {
-  await ctx.reply("Hello there!");
-});
-
-bot.hears("Hi", async (ctx) => {
-  await ctx.reply("Hi!");
-});
-```
-
-To make sure that our bot works fine, let's add some tests.
-
-Does the bot sends "Hello there!" as expected, for `/start` command? Does the
-bot reply "Hi!" upon hearing "Hi" from the user?
-
-```ts
-Deno.test("start command", async () => {
-  await user.command("start");
-  assertEquals(user.last.payload.text, "Hello there!");
-});
-
-Deno.test("hi", async () => {
-  await user.sendMessage("Hi");
-  assertEquals(user.last.payload.text, "Hi!");
-});
-```
-
-- `user.command("start");`
-
-  Sends the start command.
-
-  `user.sendMessage("Hi");`
-
-  Sends text message.
-
-- `user.last.payload.text`
-
-  `user.last` contains the last incoming response: The last response sent by the
-  bot. In the first case, it might look like this:
-
+- Does the bot send "Hello there!" as expected, for the <samp>/start</samp>
+  command?
   ```ts
-  {
-    "method": "sendMessage",
-    "payload": {
-      "chat_id": 1234567890,
-      "text": "Hello there!"
-    },
-    "signal": undefined
-  }
+  Deno.test("start command", async () => {
+    await user.command("start");
+    assertEquals(user.last.text, "Hello there!");
+  });
   ```
 
-  We can access the text that bot is replying using `user.last.payload.text` and
-  compare it with the expecting response using `assertEquals`.
+  <ins>What's happening here?</ins>
+
+  <samp><b>user.<i>command</i>("start");</b></samp>
+
+  is going to send a <samp>/start</samp> command to the bot. Then we asserts the
+  text reply of the bot `user.last.text`, to the expected reply, "Hello,
+  there!". If the logic is right, our test should pass.
+
+- Does the bot reply "Hi!" upon hearing "Hi" from the user?
+  ```ts
+  Deno.test("hi", async () => {
+    await user.sendMessage("Hi");
+    assertEquals(user.last.text, "Hi!");
+  });
+  ```
+
+  <ins>What's happening here?</ins>
+
+  <samp><b>user.<i>sendMessage</a></i>("Hi");</b></samp>
+
+  This sends a text message saying "Hi" to the bot. According to the hears
+  listener logic, the bot should be replying "Hi!" back. Just like with the
+  start command, we can compare the expected reply against `user.last.text`,
+  which points to the text in the last message the bot sent.
 
 Now let's run the tests using
 [Deno's built-in test runner](https://deno.land/manual/testing).
 
 ```bash
-deno test # You might pass permissions flags like --allow-env if needed.
+deno test # You might pass permission flags like --allow-env if needed.
 ```
 
 If everything's fine, and your tests were successful, which means your bot is
-working as expected, you will see the `deno test` command printing a bunch of
-OK-s. Awesome! 🎉
+working as expected, you will see the `deno test` command logging a bunch of
+green OK-s. It works! 🎉
+
+### Updates and Responses
+
+<samp><b>user.last</b></samp> contains payload of the last response sent by the
+bot. In the first case, it'll look like:
+
+```jsonc
+{
+  "chat_id": 1234567890,
+  "text": "Hello there!"
+}
+```
+
+- We can access the text that bot is replying from `user.last.text`
+- The actual last full response will be the last element of `user.responses`
+- You can also get the updates (requests) the user sent from `user.updates`
+- The last sent update is `user.lastUpdate`
 
 ## Chat types
 
-### `TestUser`
+### <samp>TestUser</samp>
 
-Defined at: [src/TestUser.ts](/src/TestUser.ts)
+Defined at: <samp> [src/TestUser.ts](/src/TestUser.ts)</samp>
 
-Telegram user (Private chat). They can send, edit, forward, pin messages; send
-commands, media; query inline and click buttons. And stop, block, restart the
-bot.
+Represents a Telegram user (Private chat). They can send, edit, forward, pin
+messages; send commands, media; query inline and click buttons. And stop, block,
+restart the bot.
 
 ## TODO
 
