@@ -65,7 +65,7 @@ bot.on("message:document", async (ctx) => {
 
 bot.on("message:photo", async (ctx) => {
   if (ctx.message.photo.pop()?.height! > 1920) {
-    return await ctx.reply("I can't process images that big!");
+    return await ctx.reply("Sorry, but I can't process images that big!");
   }
   await ctx.reply("Let me process the photo. Please wait...");
 });
@@ -80,11 +80,14 @@ bot.on("message:video", async (ctx) => {
 });
 
 bot.on("message:video_note", async (ctx) => {
-  await ctx.reply("Did you trimmed your beard?");
+  await ctx.replyWithVideoNote("video_note_file_id", {
+    duration: 15,
+    length: 360,
+  });
 });
 
 bot.on("message:voice", async (ctx) => {
-  await ctx.reply("Your voice is so bold");
+  await ctx.reply("Your voice is amazing!");
 });
 
 bot.on("message", async (ctx, next) => {

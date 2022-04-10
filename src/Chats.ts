@@ -1,3 +1,4 @@
+// deno-lint-ignore-file no-explicit-any
 import { Bot, Context, GrammyTypes } from "../deps.ts";
 import { TestUser } from "./TestUser.ts";
 import type { User } from "./types.ts";
@@ -13,6 +14,10 @@ export class Chats<BC extends Context = Context> {
       can_read_all_group_messages: false,
       supports_inline_queries: false,
     };
+
+    this.bot.api.config.use((_, _method, _payload) => {
+      return { ok: true, result: true } as any;
+    });
   }
 
   /**
@@ -22,10 +27,6 @@ export class Chats<BC extends Context = Context> {
    * @returns A `TestUser` instance.
    */
   newUser(user: User): TestUser<BC> {
-    return new TestUser<BC>(this.bot, user);
-  }
-
-  newTUser(user: User): TestUser<BC> {
     return new TestUser<BC>(this.bot, user);
   }
 }

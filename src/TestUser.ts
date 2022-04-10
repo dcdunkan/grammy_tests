@@ -14,7 +14,6 @@ type DefaultsOmittedMessage = Omit<
   "date" | "chat" | "from" | "message_id"
 >;
 export type ApiPayload<M extends Methods<RawApi>> = Payload<M, RawApi>;
-
 /**
  * A test user for mocking updates sent by a Telegram user or a private chat
  */
@@ -30,6 +29,9 @@ export class TestUser<BC extends Context> {
     payload: Record<string, any>;
     // Payload<Methods<RawApi>, RawApi>;
   }[] = [];
+
+  private callbacks: Record<string, ApiPayload<"answerCallbackQuery">> = {};
+  private inlineQueries: Record<string, ApiPayload<"answerInlineQuery">> = {};
 
   /** Incoming requests/updates sent from the user to the bot */
   public updates: GrammyTypes.Update[] = [];
@@ -48,15 +50,29 @@ export class TestUser<BC extends Context> {
       username: user.username,
     };
 
-    this.bot.api.config.use((_prev, method, payload) => {
-      this.responses.push({ method, payload });
-
+    this.bot.api.config.use((prev, method, payload, signal) => {
       // This is not how actually message ID increments, but this works for now
       if (method.startsWith("send")) this.message_id++;
-      else if (method.startsWith("")) this.message_id++;
+      else if (method === "forwardMessage") this.message_id++;
+
+      if ("chat_id" in payload && payload.chat_id === this.chat.id) {
+        this.responses.push({ method, payload });
+      } else if (method === "answerCallbackQuery") {
+        const cbQueryPayload = payload as ApiPayload<"answerCallbackQuery">;
+        if (cbQueryPayload.callback_query_id in this.callbacks) {
+          this.responses.push({ method, payload });
+          this.callbacks[cbQueryPayload.callback_query_id] = cbQueryPayload;
+        }
+      } else if (method === "answerInlineQuery") {
+        const inlinePayload = payload as ApiPayload<"answerInlineQuery">;
+        if (inlinePayload.inline_query_id in this.inlineQueries) {
+          this.responses.push({ method, payload });
+          this.inlineQueries[inlinePayload.inline_query_id] = inlinePayload;
+        }
+      }
 
       // TODO: Return proper API responses
-      return { ok: true, result: true } as any;
+      return prev(method, payload, signal);
     });
   }
 
@@ -71,12 +87,12 @@ export class TestUser<BC extends Context> {
   }
 
   /** Clears updates (requests) sent by the user */
-  clearIncoming(): void {
+  clearUpdates(): void {
     this.updates = [];
   }
 
   /** Clears responses from the bot */
-  clearOutgoing(): void {
+  clearResponses(): void {
     this.responses = [];
   }
 
@@ -391,11 +407,11 @@ export class TestUser<BC extends Context> {
    * @param options Additional information about the query.
    */
   inlineQuery(
-    query = "",
-    options = { offset: "", id: "1234567890" },
+    query: Omit<GrammyTypes.InlineQuery, "from" | "chat_type">,
   ): Promise<GrammyTypes.Update> {
+    this.inlineQueries[query.id] = { inline_query_id: query.id, results: [] };
     return this.sendUpdate({
-      inline_query: { query, ...options, from: this.user },
+      inline_query: { ...query, from: this.user },
     });
   }
 
@@ -406,18 +422,17 @@ export class TestUser<BC extends Context> {
    * @param callbackQuery The callback data of the inline button.
    */
   click(
-    callbackQuery: string | GrammyTypes.CallbackQuery,
+    callbackQuery: Omit<GrammyTypes.CallbackQuery, "chat_instance" | "from">,
   ): Promise<GrammyTypes.Update> {
-    const callback_query = typeof callbackQuery === "string"
-      ? {
-        id: "1234567890",
-        chat_instance: "1234567890",
-        data: callbackQuery,
-        from: this.user,
-      }
-      : callbackQuery;
+    this.callbacks[callbackQuery.id] = { callback_query_id: callbackQuery.id };
 
-    return this.sendUpdate({ callback_query });
+    return this.sendUpdate({
+      callback_query: {
+        ...callbackQuery,
+        chat_instance: `${this.user.id}071801131325`, // 07 18 01 13 13 25
+        from: this.user,
+      },
+    });
   }
 
   /**

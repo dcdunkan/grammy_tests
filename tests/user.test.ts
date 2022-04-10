@@ -11,11 +11,20 @@ const user = chats.newUser({
   language_code: "en",
 });
 
+const user2 = chats.newUser({
+  id: 2323232323,
+  first_name: "Test",
+  last_name: "user 2",
+  username: "test_usr2",
+});
+
 Deno.test("Handle Commands and Hi message", async ({ step }) => {
   await step("/start Command", async () => {
     await user.command("start");
+    await user2.command("start");
     // const payload = user.last as ApiPayload<"sendMessage">;
     assertEquals(user.last.text, "Hello there!");
+    assertEquals(user2.last.text, "Hello there!");
   });
 
   await step("Reply 'Hi!' to 'Hi'", async () => {
@@ -23,7 +32,13 @@ Deno.test("Handle Commands and Hi message", async ({ step }) => {
     assertEquals(user.last.text, "Hi!");
   });
 
+  assertEquals(user.updates.length, 2);
+  assertEquals(user.responses.length, 2);
+  assertEquals(user2.updates.length, 1);
+  assertEquals(user2.responses.length, 1);
+
   user.clear();
+  user2.clear();
 });
 
 Deno.test("Message Counter (Session usage)", async ({ step }) => {
@@ -107,10 +122,7 @@ Deno.test("Handle forwarded messages", async ({ step }) => {
       },
     });
 
-    assertEquals(
-      user.last.text,
-      "It's from... a bot?",
-    );
+    assertEquals(user.last.text, "It's from... a bot?");
   });
 
   assertEquals(user.responses.length, 3);
@@ -132,8 +144,8 @@ Deno.test("Reply to message", async () => {
 
 Deno.test("Handle edited messages", async ({ step }) => {
   await step("Edit: Text message", async () => {
-    await user.editMessageText(111, "Yes");
-    assertEquals(user.last.text, `You edited: 111`);
+    await user.editMessageText(2345, "Yes");
+    assertEquals(user.last.text, "You edited: 2345");
   });
 
   await step("Edit: Photo", async () => {
@@ -210,11 +222,11 @@ Deno.test("Handling medias", async ({ step }) => {
       photo: [{
         file_id: "file_id",
         file_unique_id: "file_unique_id",
-        height: 2000, // max 1920 (Set by the bot; NOT an official limit)
+        height: 2000, // max 1920 (NOT an official limit)
         width: 1080,
       }],
     });
-    assertEquals(user.last.text, "I can't process images that big!");
+    assertEquals(user.last.text, "Sorry, but I can't process images that big!");
   });
 
   await step("Media: Sticker", async () => {
@@ -258,7 +270,8 @@ Deno.test("Handling medias", async ({ step }) => {
         length: 30,
       },
     });
-    assertEquals(user.last.text, "Did you trimmed your beard?");
+    assertEquals(user.last.video_note, "video_note_file_id");
+    assertEquals(user.last.duration, 15);
   });
 
   await step("Media: Voice", async () => {
@@ -269,7 +282,7 @@ Deno.test("Handling medias", async ({ step }) => {
         file_unique_id: "file_unique_id",
       },
     });
-    assertEquals(user.last.text, "Your voice is so bold");
+    assertEquals(user.last.text, "Your voice is amazing!");
   });
 
   assertEquals(user.updates.length, 9);
@@ -280,7 +293,11 @@ Deno.test("Handling medias", async ({ step }) => {
 
 Deno.test("Inline Query", async ({ step }) => {
   await step("Query", async () => {
-    await user.inlineQuery();
+    await user.inlineQuery({
+      query: "", // Empty query
+      offset: "",
+      id: "11",
+    });
   });
 
   assertEquals(user.last.results[0].id, "grammy-website");
@@ -291,7 +308,7 @@ Deno.test("Inline Query", async ({ step }) => {
 
 Deno.test("Callback Query and buttons", async ({ step }) => {
   await step("Clicking 'click-me' button", async () => {
-    await user.click("click-me");
+    await user.click({ id: "111", data: "click-me" });
     assertEquals(user.last.text, "Nothing here :)");
   });
 
