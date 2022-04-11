@@ -14,6 +14,13 @@ type DefaultsOmittedMessage = Omit<
   "date" | "chat" | "from" | "message_id"
 >;
 export type ApiPayload<M extends Methods<RawApi>> = Payload<M, RawApi>;
+export type DiceEmoji =
+  | "🎲 dice"
+  | "🎳 bowling"
+  | "🎯 dart"
+  | "🏀 basketball"
+  | "⚽ football"
+  | "🎰 slot_machine";
 /**
  * A test user for mocking updates sent by a Telegram user or a private chat
  */
@@ -335,6 +342,97 @@ export class TestUser<BC extends Context> {
         from: this.user,
         message_id: this.message_id,
         ...voiceOptions,
+      },
+    });
+  }
+
+  /**
+   * Use this method to send a dice animation to the chat.
+   * @param emoji Emoji on which the dice throw animation is based
+   * @param value Value of the dice, 1-6 for “🎲”, “🎯” and “🎳” base emoji, 1-5
+   * for “🏀” and “⚽” base emoji, 1-64 for “🎰” base emoji
+   */
+  sendDice(
+    emoji: DiceEmoji,
+    value: number,
+  ): Promise<GrammyTypes.Update> {
+    return this.sendUpdate({
+      message: {
+        chat: this.chat,
+        date: Date.now(),
+        message_id: this.message_id,
+        dice: {
+          emoji: emoji.split(" ")[0],
+          value: value,
+        },
+      },
+    });
+  }
+
+  /**
+   * Use this method to send a game to the chat.
+   * @param game Information about the game
+   */
+  sendGame(
+    game: GrammyTypes.Game,
+  ): Promise<GrammyTypes.Update> {
+    return this.sendUpdate({
+      message: {
+        chat: this.chat,
+        date: Date.now(),
+        message_id: this.message_id,
+        game,
+      },
+    });
+  }
+
+  /**
+   * Use this method to send a poll to the chat.
+   * @param poll Information about the poll
+   */
+  sendPoll(
+    poll: GrammyTypes.Poll,
+  ): Promise<GrammyTypes.Update> {
+    return this.sendUpdate({
+      message: {
+        chat: this.chat,
+        date: Date.now(),
+        message_id: this.message_id,
+        poll,
+      },
+    });
+  }
+
+  /**
+   * Use this method to send a venue to the chat.
+   * @param venue Information about the venue
+   */
+  sendVenue(
+    venue: GrammyTypes.Venue,
+  ): Promise<GrammyTypes.Update> {
+    return this.sendUpdate({
+      message: {
+        chat: this.chat,
+        date: Date.now(),
+        message_id: this.message_id,
+        venue,
+      },
+    });
+  }
+
+  /**
+   * Use this method to send a location to the chat.
+   * @param location Information about the location
+   */
+  sendLocation(
+    location: GrammyTypes.Location,
+  ): Promise<GrammyTypes.Update> {
+    return this.sendUpdate({
+      message: {
+        chat: this.chat,
+        date: Date.now(),
+        message_id: this.message_id,
+        location,
       },
     });
   }
