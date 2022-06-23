@@ -1,6 +1,6 @@
 import { bot, MyContext } from "./bot.ts";
 import { /* ApiPayload, */ Chats } from "../mod.ts";
-import { assertEquals } from "https://deno.land/std@0.134.0/testing/asserts.ts";
+import { assertEquals } from "https://deno.land/std@0.145.0/testing/asserts.ts";
 
 const chats = new Chats<MyContext>(bot);
 const user = chats.newUser({
