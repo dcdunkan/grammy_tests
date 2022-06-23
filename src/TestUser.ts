@@ -8,6 +8,8 @@ import type {
   Misc,
   User,
 } from "./types.ts";
+
+type InOtherChat = GrammyTypes.Chat.GroupChat | GrammyTypes.Chat.SupergroupChat;
 type Options = MaybeCaptioned & MaybeReplied & Misc;
 type DefaultsOmittedMessage = Omit<
   GrammyTypes.Message,
@@ -133,21 +135,25 @@ export class TestUser<BC extends Context> {
    * message_id, message entities, bot information, if it was a message sent by
    * choosing an inline result.
    */
-  sendMessage(text: string, options?: {
-    message_id?: number;
-    entities?: GrammyTypes.MessageEntity[];
-    via_bot?: GrammyTypes.User;
-  }): Promise<GrammyTypes.Update> {
+  sendMessage(
+    text: string,
+    options?: {
+      message_id?: number;
+      entities?: GrammyTypes.MessageEntity[];
+      via_bot?: GrammyTypes.User;
+    },
+    chat?: InOtherChat,
+  ): Promise<GrammyTypes.Update> {
     const opts = {
       text: text,
-      message_id: options?.message_id ?? this.message_id,
+      message_id: options?.message_id ?? this.message_id++,
       ...options,
     };
 
     return this.sendUpdate({
       message: {
         date: Date.now(),
-        chat: this.chat,
+        chat: chat ?? this.chat,
         from: this.user,
         ...opts,
       },
@@ -162,14 +168,15 @@ export class TestUser<BC extends Context> {
   replyTo(
     replyToMessage: GrammyTypes.Message,
     toReply: string | Omit<DefaultsOmittedMessage, "reply_to_message">,
+    chat?: InOtherChat,
   ): Promise<GrammyTypes.Update> {
     const other = typeof toReply === "string" ? { text: toReply } : toReply;
     return this.sendUpdate({
       message: {
         date: Date.now(),
-        chat: this.chat,
+        chat: chat ?? this.chat,
         from: this.user,
-        message_id: this.message_id,
+        message_id: this.message_id++,
         reply_to_message: {
           ...replyToMessage,
           reply_to_message: undefined,
@@ -189,6 +196,7 @@ export class TestUser<BC extends Context> {
   command(
     command: string,
     match?: string,
+    chat?: InOtherChat,
   ): Promise<GrammyTypes.Update> {
     return this.sendMessage(`/${command}${match ? ` ${match}` : ""}`, {
       entities: [{
@@ -196,7 +204,7 @@ export class TestUser<BC extends Context> {
         offset: 0,
         length: 1 + command.length,
       }],
-    });
+    }, chat);
   }
 
   /**
@@ -205,13 +213,14 @@ export class TestUser<BC extends Context> {
    */
   sendAnimation(
     animationOptions: Options & { animation: GrammyTypes.Animation },
+    chat?: InOtherChat,
   ): Promise<GrammyTypes.Update> {
     return this.sendUpdate({
       message: {
         date: Date.now(),
-        chat: this.chat,
+        chat: chat ?? this.chat,
         from: this.user,
-        message_id: this.message_id,
+        message_id: this.message_id++,
         ...animationOptions,
       },
     });
@@ -223,13 +232,14 @@ export class TestUser<BC extends Context> {
    */
   sendAudio(
     audioOptions: Options & { audio: GrammyTypes.Audio },
+    chat?: InOtherChat,
   ): Promise<GrammyTypes.Update> {
     return this.sendUpdate({
       message: {
         date: Date.now(),
-        chat: this.chat,
+        chat: chat ?? this.chat,
         from: this.user,
-        message_id: this.message_id,
+        message_id: this.message_id++,
         ...audioOptions,
       },
     });
@@ -241,13 +251,14 @@ export class TestUser<BC extends Context> {
    */
   sendDocument(
     documentOptions: Options & { document: GrammyTypes.Document },
+    chat?: InOtherChat,
   ): Promise<GrammyTypes.Update> {
     return this.sendUpdate({
       message: {
         date: Date.now(),
-        chat: this.chat,
+        chat: chat ?? this.chat,
         from: this.user,
-        message_id: this.message_id,
+        message_id: this.message_id++,
         ...documentOptions,
       },
     });
@@ -259,13 +270,14 @@ export class TestUser<BC extends Context> {
    */
   sendPhoto(
     photoOptions: Options & { photo: GrammyTypes.PhotoSize[] },
+    chat?: InOtherChat,
   ): Promise<GrammyTypes.Update> {
     return this.sendUpdate({
       message: {
         date: Date.now(),
-        chat: this.chat,
+        chat: chat ?? this.chat,
         from: this.user,
-        message_id: this.message_id,
+        message_id: this.message_id++,
         ...photoOptions,
       },
     });
@@ -277,13 +289,14 @@ export class TestUser<BC extends Context> {
    */
   sendSticker(
     stickerOptions: { sticker: GrammyTypes.Sticker } & MaybeReplied & Misc,
+    chat?: InOtherChat,
   ): Promise<GrammyTypes.Update> {
     return this.sendUpdate({
       message: {
         date: Date.now(),
-        chat: this.chat,
+        chat: chat ?? this.chat,
         from: this.user,
-        message_id: this.message_id,
+        message_id: this.message_id++,
         ...stickerOptions,
       },
     });
@@ -295,13 +308,14 @@ export class TestUser<BC extends Context> {
    */
   sendVideo(
     videoOptions: Options & { video: GrammyTypes.Video },
+    chat?: InOtherChat,
   ): Promise<GrammyTypes.Update> {
     return this.sendUpdate({
       message: {
         date: Date.now(),
-        chat: this.chat,
+        chat: chat ?? this.chat,
         from: this.user,
-        message_id: this.message_id,
+        message_id: this.message_id++,
         ...videoOptions,
       },
     });
@@ -316,13 +330,14 @@ export class TestUser<BC extends Context> {
       & { video_note: GrammyTypes.VideoNote }
       & MaybeReplied
       & Misc,
+    chat?: InOtherChat,
   ): Promise<GrammyTypes.Update> {
     return this.sendUpdate({
       message: {
         date: Date.now(),
-        chat: this.chat,
+        chat: chat ?? this.chat,
         from: this.user,
-        message_id: this.message_id,
+        message_id: this.message_id++,
         ...videoNoteOptions,
       },
     });
@@ -334,13 +349,14 @@ export class TestUser<BC extends Context> {
    */
   sendVoice(
     voiceOptions: Options & { voice: GrammyTypes.Voice },
+    chat?: InOtherChat,
   ): Promise<GrammyTypes.Update> {
     return this.sendUpdate({
       message: {
         date: Date.now(),
-        chat: this.chat,
+        chat: chat ?? this.chat,
         from: this.user,
-        message_id: this.message_id,
+        message_id: this.message_id++,
         ...voiceOptions,
       },
     });
@@ -355,12 +371,14 @@ export class TestUser<BC extends Context> {
   sendDice(
     emoji: DiceEmoji,
     value: number,
+    chat?: InOtherChat,
   ): Promise<GrammyTypes.Update> {
     return this.sendUpdate({
       message: {
-        chat: this.chat,
         date: Date.now(),
-        message_id: this.message_id,
+        chat: chat ?? this.chat,
+        from: this.user,
+        message_id: this.message_id++,
         dice: {
           emoji: emoji.split(" ")[0],
           value: value,
@@ -375,12 +393,14 @@ export class TestUser<BC extends Context> {
    */
   sendGame(
     game: GrammyTypes.Game,
+    chat?: InOtherChat,
   ): Promise<GrammyTypes.Update> {
     return this.sendUpdate({
       message: {
-        chat: this.chat,
         date: Date.now(),
-        message_id: this.message_id,
+        chat: chat ?? this.chat,
+        from: this.user,
+        message_id: this.message_id++,
         game,
       },
     });
@@ -392,12 +412,14 @@ export class TestUser<BC extends Context> {
    */
   sendPoll(
     poll: GrammyTypes.Poll,
+    chat?: InOtherChat,
   ): Promise<GrammyTypes.Update> {
     return this.sendUpdate({
       message: {
-        chat: this.chat,
         date: Date.now(),
-        message_id: this.message_id,
+        chat: chat ?? this.chat,
+        from: this.user,
+        message_id: this.message_id++,
         poll,
       },
     });
@@ -409,12 +431,14 @@ export class TestUser<BC extends Context> {
    */
   sendVenue(
     venue: GrammyTypes.Venue,
+    chat?: InOtherChat,
   ): Promise<GrammyTypes.Update> {
     return this.sendUpdate({
       message: {
-        chat: this.chat,
         date: Date.now(),
-        message_id: this.message_id,
+        chat: chat ?? this.chat,
+        from: this.user,
+        message_id: this.message_id++,
         venue,
       },
     });
@@ -426,12 +450,14 @@ export class TestUser<BC extends Context> {
    */
   sendLocation(
     location: GrammyTypes.Location,
+    chat?: InOtherChat,
   ): Promise<GrammyTypes.Update> {
     return this.sendUpdate({
       message: {
-        chat: this.chat,
         date: Date.now(),
-        message_id: this.message_id,
+        chat: chat ?? this.chat,
+        from: this.user,
+        message_id: this.message_id++,
         location,
       },
     });
@@ -457,10 +483,11 @@ export class TestUser<BC extends Context> {
   editMessageText(
     message_id: number,
     text: string,
+    chat?: InOtherChat,
   ): Promise<GrammyTypes.Update> {
     return this.editMessage({
       date: Date.now(),
-      chat: this.chat,
+      chat: chat ?? this.chat,
       from: this.user,
       edit_date: Date.now(),
       message_id,
@@ -474,13 +501,14 @@ export class TestUser<BC extends Context> {
    */
   forwardMessage(
     options: ForwardMessageOptions,
+    chat?: InOtherChat,
   ): Promise<GrammyTypes.Update> {
     return this.sendUpdate({
       message: {
         date: Date.now(),
+        chat: chat ?? this.chat,
         from: this.user,
-        chat: this.chat,
-        message_id: this.message_id,
+        message_id: this.message_id++,
         forward_date: Date.now(),
         ...options,
       },
@@ -495,21 +523,26 @@ export class TestUser<BC extends Context> {
   forwardTextMessage(
     text: string,
     entities?: GrammyTypes.MessageEntity[],
+    chat?: InOtherChat,
   ): Promise<GrammyTypes.Update> {
-    return this.forwardMessage({ text, entities });
+    return this.forwardMessage({ text, entities }, chat);
   }
 
   /**
    * Use this method to query inline.
    * @param query Query string. Defaults to an empty string.
-   * @param options Additional information about the query.
    */
   inlineQuery(
     query: Omit<GrammyTypes.InlineQuery, "from" | "chat_type">,
+    chat?: InOtherChat,
   ): Promise<GrammyTypes.Update> {
     this.inlineQueries[query.id] = { inline_query_id: query.id, results: [] };
     return this.sendUpdate({
-      inline_query: { ...query, from: this.user },
+      inline_query: {
+        ...query,
+        chat_type: chat?.type ?? "sender",
+        from: this.user,
+      },
     });
   }
 
@@ -521,13 +554,14 @@ export class TestUser<BC extends Context> {
    */
   click(
     callbackQuery: Omit<GrammyTypes.CallbackQuery, "chat_instance" | "from">,
+    chat?: InOtherChat,
   ): Promise<GrammyTypes.Update> {
     this.callbacks[callbackQuery.id] = { callback_query_id: callbackQuery.id };
 
     return this.sendUpdate({
       callback_query: {
         ...callbackQuery,
-        chat_instance: `${this.user.id}071801131325`, // 07 18 01 13 13 25
+        chat_instance: `${chat?.id ?? this.chat.id}071801131325`, // 07 18 01 13 13 25
         from: this.user,
       },
     });
@@ -539,11 +573,12 @@ export class TestUser<BC extends Context> {
    */
   pinMessage(
     message: GrammyTypes.ReplyMessage,
+    chat?: InOtherChat,
   ): Promise<GrammyTypes.Update> {
     return this.sendUpdate({
       message: {
         date: Date.now(),
-        chat: this.chat,
+        chat: chat ?? this.chat,
         from: this.user,
         message_id: this.message_id,
         pinned_message: message,
@@ -563,6 +598,7 @@ export class TestUser<BC extends Context> {
       /** Whether it is the first ever `/start` command to the bot */
       first_start?: boolean;
     },
+    chat?: InOtherChat,
   ) {
     if (!options) return this.command("start");
     this.sendMessage(
@@ -571,6 +607,7 @@ export class TestUser<BC extends Context> {
         entities: [{ type: "bot_command", offset: 0, length: 6 }],
         message_id: options.first_start ? 1 : this.message_id,
       },
+      chat,
     );
   }
 
