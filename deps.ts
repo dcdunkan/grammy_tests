@@ -1,4 +1,19 @@
-import { RawApi } from "https://lib.deno.dev/x/grammy@1.x/mod.ts";
+import { InputFile } from "https://lib.deno.dev/x/grammy@1.x/mod.ts";
+import { InputFileProxy } from "https://esm.sh/@grammyjs/types@2.8.0";
+
+// All of these types were imported from grammyjs/grammY source.
+type GrammyTypes_ = InputFileProxy<InputFile>;
+type Telegram = GrammyTypes_["Telegram"];
+type Opts<M extends keyof GrammyTypes_["Telegram"]> = GrammyTypes_["Opts"][M];
+
+export type RawApi = {
+  [M in keyof Telegram]: Parameters<Telegram[M]>[0] extends undefined
+    ? (signal?: AbortSignal) => Promise<ReturnType<Telegram[M]>>
+    : (
+      args: Opts<M>,
+      signal?: AbortSignal,
+    ) => Promise<ReturnType<Telegram[M]>>;
+};
 
 export type Methods<R extends RawApi> = string & keyof R;
 export type Payload<M extends Methods<R>, R extends RawApi> = M extends unknown
@@ -9,6 +24,5 @@ export type Payload<M extends Methods<R>, R extends RawApi> = M extends unknown
   : never
   : never;
 
-export { type RawApi };
 export * as GrammyTypes from "https://esm.sh/@grammyjs/types@2.8.0";
 export { Bot, Context } from "https://lib.deno.dev/x/grammy@1.x/mod.ts";
