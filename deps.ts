@@ -1,5 +1,5 @@
 import { InputFile } from "https://lib.deno.dev/x/grammy@1.x/mod.ts";
-import { InputFileProxy } from "https://esm.sh/@grammyjs/types@2.8.0";
+import { InputFileProxy } from "https://lib.deno.dev/x/grammy@1.x/types.ts";
 
 // All of these types were imported from grammyjs/grammY source.
 type GrammyTypes_ = InputFileProxy<InputFile>;
