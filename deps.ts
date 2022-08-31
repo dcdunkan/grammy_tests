@@ -24,5 +24,5 @@ export type Payload<M extends Methods<R>, R extends RawApi> = M extends unknown
   : never
   : never;
 
-export * as GrammyTypes from "https://esm.sh/@grammyjs/types@2.8.0";
+export * as GrammyTypes from "https://lib.deno.dev/x/grammy@1.x/types.ts";
 export { Bot, Context } from "https://lib.deno.dev/x/grammy@1.x/mod.ts";
