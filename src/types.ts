@@ -1,54 +1,57 @@
-import { GrammyTypes } from "../deps.ts";
+// TODO: Remove usage of these types from other source files
+// and define and use types there.
 
-export type User = Omit<GrammyTypes.User, "is_bot">;
+import { Types } from "./deps.ts";
+
+export type User = Omit<Types.User, "is_bot">;
 
 export interface ForwardMessageOptions {
-  animation?: GrammyTypes.Animation;
-  audio?: GrammyTypes.Audio;
+  animation?: Types.Animation;
+  audio?: Types.Audio;
   author_signature?: string;
   caption?: string;
-  caption_entities?: GrammyTypes.MessageEntity[];
-  contact?: GrammyTypes.Contact;
-  dice?: GrammyTypes.Dice;
-  document?: GrammyTypes.Document;
+  caption_entities?: Types.MessageEntity[];
+  contact?: Types.Contact;
+  dice?: Types.Dice;
+  document?: Types.Document;
   edit_date?: number;
-  entities?: GrammyTypes.MessageEntity[];
+  entities?: Types.MessageEntity[];
   forward_date?: number;
-  forward_from?: GrammyTypes.User;
-  forward_from_chat?: GrammyTypes.Chat;
+  forward_from?: Types.User;
+  forward_from_chat?: Types.Chat;
   forward_from_message_id?: number;
   forward_sender_name?: string;
   forward_signature?: string;
-  game?: GrammyTypes.Game;
+  game?: Types.Game;
   has_protected_content?: true;
   is_automatic_forward?: true;
-  location?: GrammyTypes.Location;
+  location?: Types.Location;
   media_group_id?: string;
-  photo?: GrammyTypes.PhotoSize[];
-  poll?: GrammyTypes.Poll;
-  reply_markup?: GrammyTypes.InlineKeyboardMarkup;
-  reply_to_message?: GrammyTypes.ReplyMessage;
-  sender_chat?: GrammyTypes.Chat;
-  sticker?: GrammyTypes.Sticker;
+  photo?: Types.PhotoSize[];
+  poll?: Types.Poll;
+  reply_markup?: Types.InlineKeyboardMarkup;
+  reply_to_message?: Types.ReplyMessage;
+  sender_chat?: Types.Chat;
+  sticker?: Types.Sticker;
   text?: string;
-  venue?: GrammyTypes.Venue;
-  via_bot?: GrammyTypes.User;
-  video?: GrammyTypes.Video;
-  video_note?: GrammyTypes.VideoNote;
-  voice?: GrammyTypes.Voice;
+  venue?: Types.Venue;
+  via_bot?: Types.User;
+  video?: Types.Video;
+  video_note?: Types.VideoNote;
+  voice?: Types.Voice;
 }
 
 export interface MaybeCaptioned {
   caption?: string;
-  caption_entities?: GrammyTypes.MessageEntity[];
+  caption_entities?: Types.MessageEntity[];
 }
 
 export interface MaybeReplied {
-  reply_to_message?: GrammyTypes.ReplyMessage;
+  reply_to_message?: Types.ReplyMessage;
 }
 
 export interface Misc {
-  via_bot?: GrammyTypes.User;
+  via_bot?: Types.User;
 }
 
 export interface GroupAndChannelMisc {

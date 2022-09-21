@@ -1,13 +1,14 @@
-<h1 align="center">🧪 grammY Tests</h1>
+<h1 align="center">grammY Tests</h1>
 
 **Work in progress!**
 
-Testing framework for Telegram bots written using [grammY](https://grammy.dev).
-Written in [TypeScript](https://typescript.org) and [Deno](https://deno.land/).
+Unofficial testing framework for Telegram bots written using
+[grammY](https://grammy.dev). This library currently only works with
+[Deno](https://deno.land/).
 
-Check out the test examples in the [tests](/tests/) folder. The file
-[bot.ts](/tests/bot.ts) contains an example logic of the bot we want to write
-tests for. [user.test.ts](/tests/user.test.ts) has an example of
+Check out the test examples in the [tests](./tests/) folder. The file
+[bot.ts](./tests/bot.ts) contains an example logic of the bot we want to write
+tests for. [user.test.ts](./tests/user.test.ts) has an example of
 [test user instance](#testuser), which sends fake updates and checks whether
 your bot replies as expected or not.
 
@@ -26,13 +27,8 @@ export const bot = new Bot("BOT_TOKEN");
 For now, consider the following simple program as the bot's logic.
 
 ```ts
-bot.command("start", async (ctx) => {
-  await ctx.reply("Hello there!");
-});
-
-bot.hears("Hi", async (ctx) => {
-  await ctx.reply("Hi!");
-});
+bot.command("start", (ctx) => ctx.reply("Hello there!"));
+bot.hears("Hi", (ctx) => ctx.reply("Hi!"));
 ```
 
 Now the bot we are testing has a start command handler which replies "Hello
@@ -50,7 +46,7 @@ Create a chat "manager" instance and create a user. With that user, we can send
 fake updates to the bot and make sure that the bot responds as expected.
 
 ```ts
-import { Chats } from "https://raw.githubusercontent.com/dcdunkan/tests/main/mod.ts";
+import { Chats } from "https://ghc.deno.dev/dcdunkan/tests@main/mod.ts";
 
 // A testing helper function from Deno standard library.
 import { assertEquals } from "https://deno.land/std/testing/asserts.ts";
@@ -129,30 +125,16 @@ bot. In the first case, it'll look like:
 
 ### <samp>TestUser</samp>
 
-Defined at: <samp> [src/TestUser.ts](/src/TestUser.ts)</samp>
+Defined at: <samp> [src/chat_types/user.ts](./src/chat_types/user.ts)</samp>
 
 Represents a Telegram user (Private chat). They can send, edit, forward, pin
 messages; send commands, media; query inline and click buttons. And stop, block,
 restart the bot.
 
-## TODO
-
-- Add `Group`, `SuperGroup`, `Channel` chat types.
-- Return proper API request results.
-
-  Example use case:
-  ```ts
-  const message = await ctx.reply("Hello!");
-  // Currently `message` is just `true`.
-  console.log(message.message_id);
-  // => undefined
-  ```
-- Add more _practical_ test cases and examples.
-
 ---
 
 <p align="center">
   <samp>
-    <a href="https://github.com/dcdunkan/tests/blob/main/LICENSE">Licensed under MIT</a>
+    <a href="./LICENSE">Licensed under MIT</a>
   </samp>
 </p>

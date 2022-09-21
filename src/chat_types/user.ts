@@ -1,36 +1,37 @@
 // deno-lint-ignore-file no-explicit-any
-import { Bot, Context, GrammyTypes, Payload } from "../deps.ts";
-import type { Methods, RawApi } from "../deps.ts";
+import { Bot, Context, Methods, Payload, RawApi, Types } from "../deps.ts";
 import type {
   ForwardMessageOptions,
   MaybeCaptioned,
   MaybeReplied,
   Misc,
   User,
-} from "./types.ts";
+} from "../types.ts";
 
-type InOtherChat = GrammyTypes.Chat.GroupChat | GrammyTypes.Chat.SupergroupChat;
+function getDate() {
+  return Math.trunc(Date.now() / 1000);
+}
+
+type InOtherChat =
+  | Types.Chat.SupergroupChat
+  | Types.Chat.GroupChat;
 type Options = MaybeCaptioned & MaybeReplied & Misc;
 type DefaultsOmittedMessage = Omit<
-  GrammyTypes.Message,
+  Types.Message,
   "date" | "chat" | "from" | "message_id"
 >;
 export type ApiPayload<M extends Methods<RawApi>> = Payload<M, RawApi>;
-export type DiceEmoji =
-  | "🎲 dice"
-  | "🎳 bowling"
-  | "🎯 dart"
-  | "🏀 basketball"
-  | "⚽ football"
-  | "🎰 slot_machine";
+export type DiceEmoji = "🎲" | "🎳" | "🎯" | "🏀" | "⚽" | "🎰";
 /**
  * A test user for mocking updates sent by a Telegram user or a private chat
  */
 export class TestUser<BC extends Context> {
-  public readonly user: GrammyTypes.User;
-  public readonly chat: GrammyTypes.Chat.PrivateChat;
+  public readonly type = "private";
+  public readonly user: Types.User;
+  public readonly chat: Types.Chat.PrivateChat;
   public update_id = 100000;
   public message_id = 2;
+  public readonly messages: Map<number, Types.Message> = new Map()
 
   /** Outgoing responses from the bot */
   public responses: {
@@ -43,7 +44,7 @@ export class TestUser<BC extends Context> {
   private inlineQueries: Record<string, ApiPayload<"answerInlineQuery">> = {};
 
   /** Incoming requests/updates sent from the user to the bot */
-  public updates: GrammyTypes.Update[] = [];
+  public updates: Types.Update[] = [];
 
   /**
    * @param bot The `Bot` instance to be tested
@@ -85,6 +86,10 @@ export class TestUser<BC extends Context> {
     });
   }
 
+  getChat() {
+    
+  }
+
   /** Last sent update by the user */
   get lastUpdate() {
     return this.updates[this.updates.length - 1];
@@ -116,8 +121,8 @@ export class TestUser<BC extends Context> {
    * @param update The Update to send; without the `update_id` property.
    */
   async sendUpdate(
-    update: Omit<GrammyTypes.Update, "update_id">,
-  ): Promise<GrammyTypes.Update> {
+    update: Omit<Types.Update, "update_id">,
+  ): Promise<Types.Update> {
     // TODO: Validate update.
     const updateToSend = { ...update, update_id: this.update_id };
     await this.bot.handleUpdate(updateToSend);
@@ -139,11 +144,11 @@ export class TestUser<BC extends Context> {
     text: string,
     options?: {
       message_id?: number;
-      entities?: GrammyTypes.MessageEntity[];
-      via_bot?: GrammyTypes.User;
+      entities?: Types.MessageEntity[];
+      via_bot?: Types.User;
     },
     chat?: InOtherChat,
-  ): Promise<GrammyTypes.Update> {
+  ): Promise<Types.Update> {
     const opts = {
       text: text,
       message_id: options?.message_id ?? this.message_id++,
@@ -152,7 +157,7 @@ export class TestUser<BC extends Context> {
 
     return this.sendUpdate({
       message: {
-        date: Date.now(),
+        date: getDate(),
         chat: chat ?? this.chat,
         from: this.user,
         ...opts,
@@ -166,14 +171,14 @@ export class TestUser<BC extends Context> {
    * @param toReply The content of the reply.
    */
   replyTo(
-    replyToMessage: GrammyTypes.Message,
+    replyToMessage: Types.Message,
     toReply: string | Omit<DefaultsOmittedMessage, "reply_to_message">,
     chat?: InOtherChat,
-  ): Promise<GrammyTypes.Update> {
+  ): Promise<Types.Update> {
     const other = typeof toReply === "string" ? { text: toReply } : toReply;
     return this.sendUpdate({
       message: {
-        date: Date.now(),
+        date: getDate(),
         chat: chat ?? this.chat,
         from: this.user,
         message_id: this.message_id++,
@@ -197,7 +202,7 @@ export class TestUser<BC extends Context> {
     command: string,
     match?: string,
     chat?: InOtherChat,
-  ): Promise<GrammyTypes.Update> {
+  ): Promise<Types.Update> {
     return this.sendMessage(`/${command}${match ? ` ${match}` : ""}`, {
       entities: [{
         type: "bot_command",
@@ -212,12 +217,12 @@ export class TestUser<BC extends Context> {
    * @param animationOptions Information about the animation and optional parameters.
    */
   sendAnimation(
-    animationOptions: Options & { animation: GrammyTypes.Animation },
+    animationOptions: Options & { animation: Types.Animation },
     chat?: InOtherChat,
-  ): Promise<GrammyTypes.Update> {
+  ): Promise<Types.Update> {
     return this.sendUpdate({
       message: {
-        date: Date.now(),
+        date: getDate(),
         chat: chat ?? this.chat,
         from: this.user,
         message_id: this.message_id++,
@@ -231,12 +236,12 @@ export class TestUser<BC extends Context> {
    * @param audioOptions Information about the audio and optional parameters.
    */
   sendAudio(
-    audioOptions: Options & { audio: GrammyTypes.Audio },
+    audioOptions: Options & { audio: Types.Audio },
     chat?: InOtherChat,
-  ): Promise<GrammyTypes.Update> {
+  ): Promise<Types.Update> {
     return this.sendUpdate({
       message: {
-        date: Date.now(),
+        date: getDate(),
         chat: chat ?? this.chat,
         from: this.user,
         message_id: this.message_id++,
@@ -250,12 +255,12 @@ export class TestUser<BC extends Context> {
    * @param documentOptions Information about the document and optional parameters.
    */
   sendDocument(
-    documentOptions: Options & { document: GrammyTypes.Document },
+    documentOptions: Options & { document: Types.Document },
     chat?: InOtherChat,
-  ): Promise<GrammyTypes.Update> {
+  ): Promise<Types.Update> {
     return this.sendUpdate({
       message: {
-        date: Date.now(),
+        date: getDate(),
         chat: chat ?? this.chat,
         from: this.user,
         message_id: this.message_id++,
@@ -269,12 +274,12 @@ export class TestUser<BC extends Context> {
    * @param photoOptions Information about the photo and optional parameters.
    */
   sendPhoto(
-    photoOptions: Options & { photo: GrammyTypes.PhotoSize[] },
+    photoOptions: Options & { photo: Types.PhotoSize[] },
     chat?: InOtherChat,
-  ): Promise<GrammyTypes.Update> {
+  ): Promise<Types.Update> {
     return this.sendUpdate({
       message: {
-        date: Date.now(),
+        date: getDate(),
         chat: chat ?? this.chat,
         from: this.user,
         message_id: this.message_id++,
@@ -288,12 +293,12 @@ export class TestUser<BC extends Context> {
    * @param stickerOptions Information about the sticker and optional parameters.
    */
   sendSticker(
-    stickerOptions: { sticker: GrammyTypes.Sticker } & MaybeReplied & Misc,
+    stickerOptions: { sticker: Types.Sticker } & MaybeReplied & Misc,
     chat?: InOtherChat,
-  ): Promise<GrammyTypes.Update> {
+  ): Promise<Types.Update> {
     return this.sendUpdate({
       message: {
-        date: Date.now(),
+        date: getDate(),
         chat: chat ?? this.chat,
         from: this.user,
         message_id: this.message_id++,
@@ -307,12 +312,12 @@ export class TestUser<BC extends Context> {
    * @param videoOptions Information about the video and optional parameters.
    */
   sendVideo(
-    videoOptions: Options & { video: GrammyTypes.Video },
+    videoOptions: Options & { video: Types.Video },
     chat?: InOtherChat,
-  ): Promise<GrammyTypes.Update> {
+  ): Promise<Types.Update> {
     return this.sendUpdate({
       message: {
-        date: Date.now(),
+        date: getDate(),
         chat: chat ?? this.chat,
         from: this.user,
         message_id: this.message_id++,
@@ -327,14 +332,14 @@ export class TestUser<BC extends Context> {
    */
   sendVideoNote(
     videoNoteOptions:
-      & { video_note: GrammyTypes.VideoNote }
+      & { video_note: Types.VideoNote }
       & MaybeReplied
       & Misc,
     chat?: InOtherChat,
-  ): Promise<GrammyTypes.Update> {
+  ): Promise<Types.Update> {
     return this.sendUpdate({
       message: {
-        date: Date.now(),
+        date: getDate(),
         chat: chat ?? this.chat,
         from: this.user,
         message_id: this.message_id++,
@@ -348,12 +353,12 @@ export class TestUser<BC extends Context> {
    * @param voiceOptions Information about the voice message and optional parameters.
    */
   sendVoice(
-    voiceOptions: Options & { voice: GrammyTypes.Voice },
+    voiceOptions: Options & { voice: Types.Voice },
     chat?: InOtherChat,
-  ): Promise<GrammyTypes.Update> {
+  ): Promise<Types.Update> {
     return this.sendUpdate({
       message: {
-        date: Date.now(),
+        date: getDate(),
         chat: chat ?? this.chat,
         from: this.user,
         message_id: this.message_id++,
@@ -372,10 +377,10 @@ export class TestUser<BC extends Context> {
     emoji: DiceEmoji,
     value: number,
     chat?: InOtherChat,
-  ): Promise<GrammyTypes.Update> {
+  ): Promise<Types.Update> {
     return this.sendUpdate({
       message: {
-        date: Date.now(),
+        date: getDate(),
         chat: chat ?? this.chat,
         from: this.user,
         message_id: this.message_id++,
@@ -392,12 +397,12 @@ export class TestUser<BC extends Context> {
    * @param game Information about the game
    */
   sendGame(
-    game: GrammyTypes.Game,
+    game: Types.Game,
     chat?: InOtherChat,
-  ): Promise<GrammyTypes.Update> {
+  ): Promise<Types.Update> {
     return this.sendUpdate({
       message: {
-        date: Date.now(),
+        date: getDate(),
         chat: chat ?? this.chat,
         from: this.user,
         message_id: this.message_id++,
@@ -411,12 +416,12 @@ export class TestUser<BC extends Context> {
    * @param poll Information about the poll
    */
   sendPoll(
-    poll: GrammyTypes.Poll,
+    poll: Types.Poll,
     chat?: InOtherChat,
-  ): Promise<GrammyTypes.Update> {
+  ): Promise<Types.Update> {
     return this.sendUpdate({
       message: {
-        date: Date.now(),
+        date: getDate(),
         chat: chat ?? this.chat,
         from: this.user,
         message_id: this.message_id++,
@@ -430,12 +435,12 @@ export class TestUser<BC extends Context> {
    * @param venue Information about the venue
    */
   sendVenue(
-    venue: GrammyTypes.Venue,
+    venue: Types.Venue,
     chat?: InOtherChat,
-  ): Promise<GrammyTypes.Update> {
+  ): Promise<Types.Update> {
     return this.sendUpdate({
       message: {
-        date: Date.now(),
+        date: getDate(),
         chat: chat ?? this.chat,
         from: this.user,
         message_id: this.message_id++,
@@ -449,12 +454,12 @@ export class TestUser<BC extends Context> {
    * @param location Information about the location
    */
   sendLocation(
-    location: GrammyTypes.Location,
+    location: Types.Location,
     chat?: InOtherChat,
-  ): Promise<GrammyTypes.Update> {
+  ): Promise<Types.Update> {
     return this.sendUpdate({
       message: {
-        date: Date.now(),
+        date: getDate(),
         chat: chat ?? this.chat,
         from: this.user,
         message_id: this.message_id++,
@@ -468,8 +473,8 @@ export class TestUser<BC extends Context> {
    * @param message Message to edit.
    */
   editMessage(
-    message: GrammyTypes.Message,
-  ): Promise<GrammyTypes.Update> {
+    message: Types.Message,
+  ): Promise<Types.Update> {
     return this.sendUpdate({
       edited_message: message,
     });
@@ -484,12 +489,12 @@ export class TestUser<BC extends Context> {
     message_id: number,
     text: string,
     chat?: InOtherChat,
-  ): Promise<GrammyTypes.Update> {
+  ): Promise<Types.Update> {
     return this.editMessage({
-      date: Date.now(),
+      date: getDate(),
       chat: chat ?? this.chat,
       from: this.user,
-      edit_date: Date.now(),
+      edit_date: getDate(),
       message_id,
       text,
     });
@@ -502,14 +507,14 @@ export class TestUser<BC extends Context> {
   forwardMessage(
     options: ForwardMessageOptions,
     chat?: InOtherChat,
-  ): Promise<GrammyTypes.Update> {
+  ): Promise<Types.Update> {
     return this.sendUpdate({
       message: {
-        date: Date.now(),
+        date: getDate(),
         chat: chat ?? this.chat,
         from: this.user,
         message_id: this.message_id++,
-        forward_date: Date.now(),
+        forward_date: getDate(),
         ...options,
       },
     });
@@ -522,9 +527,9 @@ export class TestUser<BC extends Context> {
    */
   forwardTextMessage(
     text: string,
-    entities?: GrammyTypes.MessageEntity[],
+    entities?: Types.MessageEntity[],
     chat?: InOtherChat,
-  ): Promise<GrammyTypes.Update> {
+  ): Promise<Types.Update> {
     return this.forwardMessage({ text, entities }, chat);
   }
 
@@ -533,9 +538,9 @@ export class TestUser<BC extends Context> {
    * @param query Query string. Defaults to an empty string.
    */
   inlineQuery(
-    query: Omit<GrammyTypes.InlineQuery, "from" | "chat_type">,
+    query: Omit<Types.InlineQuery, "from" | "chat_type">,
     chat?: InOtherChat,
-  ): Promise<GrammyTypes.Update> {
+  ): Promise<Types.Update> {
     this.inlineQueries[query.id] = { inline_query_id: query.id, results: [] };
     return this.sendUpdate({
       inline_query: {
@@ -553,9 +558,9 @@ export class TestUser<BC extends Context> {
    * @param callbackQuery The callback data of the inline button.
    */
   click(
-    callbackQuery: Omit<GrammyTypes.CallbackQuery, "chat_instance" | "from">,
+    callbackQuery: Omit<Types.CallbackQuery, "chat_instance" | "from">,
     chat?: InOtherChat,
-  ): Promise<GrammyTypes.Update> {
+  ): Promise<Types.Update> {
     this.callbacks[callbackQuery.id] = { callback_query_id: callbackQuery.id };
 
     return this.sendUpdate({
@@ -572,12 +577,12 @@ export class TestUser<BC extends Context> {
    * @param message The message to be pin in chat.
    */
   pinMessage(
-    message: GrammyTypes.ReplyMessage,
+    message: Types.ReplyMessage,
     chat?: InOtherChat,
-  ): Promise<GrammyTypes.Update> {
+  ): Promise<Types.Update> {
     return this.sendUpdate({
       message: {
-        date: Date.now(),
+        date: getDate(),
         chat: chat ?? this.chat,
         from: this.user,
         message_id: this.message_id,
@@ -618,7 +623,7 @@ export class TestUser<BC extends Context> {
   stopBot() {
     return this.sendUpdate({
       my_chat_member: {
-        date: Date.now(),
+        date: getDate(),
         chat: this.chat,
         from: this.user,
         old_chat_member: {
@@ -638,13 +643,13 @@ export class TestUser<BC extends Context> {
    * Use this method to restart the bot if it has been blocked or
    * stopped by the user.
    */
-  async restartBot({ sendStartCmd = true }: {
+  async restartBot({ sendStart = true }: {
     /** Whether a start command should be sent after unblocking/restarting the bot */
-    sendStartCmd: boolean;
+    sendStart: boolean;
   }) {
     await this.sendUpdate({
       my_chat_member: {
-        date: Date.now(),
+        date: getDate(),
         chat: this.chat,
         from: this.user,
         old_chat_member: {
@@ -661,6 +666,6 @@ export class TestUser<BC extends Context> {
 
     // Clicking "Restart Bot" button, also sends a '/start' command
     // in Official Telegram Clients. Set `sendStartCmd` to false, to disable.
-    if (sendStartCmd) await this.command("start");
+    if (sendStart) await this.command("start");
   }
 }
