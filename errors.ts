@@ -1,8 +1,5 @@
 import { Types } from "./deps.ts";
 
-// TODO: Collect proper error explanations and status codes
-// that can exactly mimick Telegram's Bot API server.
-// https://github.com/roj1512/bot-api-errors/blob/main/errors.json
 const ERRORS = {
   CHAT_NOT_FOUND: [404, "CHAT NOT FOUND"],
   NOT_FOUND: [404, "NOT FOUND"],

@@ -7,20 +7,21 @@
 - Send responses of events occurred to users such as, chat_member updates.
 - Sync chat invite links through out the environment and allow users to join
   via the link.
-- Refine User type, because it sucks.
 */
 
 import {
   ApiCallResult,
   Bot,
   Context,
+  getDate,
   Methods,
+  objectEquals,
   Payload,
   RawApi,
   Types,
 } from "./deps.ts";
-import { TestUser } from "./chat_types/user.ts";
-import { Supergroup } from "./chat_types/supergroup.ts";
+import { Private, PrivateDetails } from "./private.ts";
+import { Supergroup, SuperGroupDetails } from "./supergroup.ts";
 import { apiError } from "./errors.ts";
 
 // Set of helper functions to generate random and fake values for
@@ -82,7 +83,6 @@ const adminPermissions = {
   ],
 } as const;
 
-// Uniqueness and randomness matter!
 const randomsUsed: Set<unknown> = new Set();
 function unique<T>(generateFn: () => T) {
   let random = generateFn();
@@ -99,7 +99,7 @@ function apiResult<M extends Methods<RawApi>>(result: unknown) {
 }
 
 type ChatType<C extends Context> =
-  | TestUser<C>
+  | Private<C>
   | Supergroup<C>;
 
 function resolveUsername<C extends Context>(
@@ -129,6 +129,8 @@ export class Chats<C extends Context = Context> {
     };
 
     this.bot.api.config.use(async (prev, method, payload, signal) => {
+      // Common methods
+
       // Methods that is related to a specific chat.
       if ("chat_id" in payload && payload.chat_id !== undefined) {
         const chatId = typeof payload.chat_id === "string" &&
@@ -172,18 +174,26 @@ export class Chats<C extends Context = Context> {
               }
             }
 
+            if (chat.type === "private" && chat.blocked) {
+              return apiError("BAD_REQUEST", "Bot is blocked by the user");
+            }
+
             chat.message_id++;
             chat.messages.set(chat.message_id, {
               chat: chat.chat,
               from: this.bot.botInfo,
-              date: date(),
+              date: getDate(),
               message_id: chat.message_id,
               text: p.text,
               entities: p.entities,
-              // reply_markup: p.reply_markup,
+              reply_markup:
+                p.reply_markup && "inline_keyboard" in p.reply_markup
+                  ? p.reply_markup
+                  : undefined, // CHECK TODO
             });
             return apiResult(true);
           }
+
           case "forwardMessage":
           case "sendPhoto":
           case "sendAudio":
@@ -1226,51 +1236,15 @@ export class Chats<C extends Context = Context> {
     return this.bot;
   }
 
-  newUser(user: Omit<Types.User, "is_bot">) {
-    return new TestUser<C>(this.bot, user);
+  newUser(details: PrivateDetails) {
+    const chat = new Private<C>(this, details);
+    this.chats.set(chat.chat.id, chat);
+    return chat;
   }
 
-  // supergroup, group, channel
-}
-
-// `equals` modified from std/testing
-function objectEquals(c: unknown, d: unknown): boolean {
-  const seen = new Map();
-  return (function compare(a: unknown, b: unknown): boolean {
-    if (Object.is(a, b)) {
-      return true;
-    }
-    if (a && typeof a === "object" && b && typeof b === "object") {
-      if (seen.get(a) === b) {
-        return true;
-      }
-      if (Object.keys(a || {}).length !== Object.keys(b || {}).length) {
-        return false;
-      }
-      seen.set(a, b);
-      const merged = { ...a, ...b };
-      for (
-        const key of [
-          ...Object.getOwnPropertyNames(merged),
-          ...Object.getOwnPropertySymbols(merged),
-        ]
-      ) {
-        type Key = keyof typeof merged;
-        if (!compare(a && a[key as Key], b && b[key as Key])) {
-          return false;
-        }
-        if (((key in a) && (!(key in b))) || ((key in b) && (!(key in a)))) {
-          return false;
-        }
-      }
-      return true;
-    }
-    return false;
-  })(c, d);
-}
-
-// Date format in Telegram API results
-function date() {
-  // Thanks @KnorpelSenf (https://t.me/grammyjs/76466)
-  return Math.trunc(Date.now() / 1000); 
+  newSupergroup(details: SuperGroupDetails<C>) {
+    const chat = new Supergroup<C>(this, details);
+    this.chats.set(chat.chat.id, chat);
+    return chat;
+  }
 }

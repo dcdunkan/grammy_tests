@@ -1,17 +1,15 @@
-import { Bot, Context, Methods, Payload, RawApi, Types } from "../deps.ts";
-import { TestUser } from "./user.ts";
-import { Chats } from "../chats.ts";
+import { Bot, Context, Methods, Payload, RawApi, Types } from "./deps.ts";
+import { Private } from "./private.ts";
+import { Chats } from "./chats.ts";
 
 type Member<C extends Context> =
   | Types.User
   | Types.ChatMember
-  | TestUser<C>
+  | Private<C>
   | Bot<C>;
 type Admin<C extends Context> = Member<C> | Types.ChatMemberAdministrator;
 
-function getMemberUser<C extends Context>(
-  member: Member<C> | Types.ChatMember,
-) {
+function getMemberUser<C extends Context>(member: Member<C>) {
   return "botInfo" in member
     ? member.botInfo
     : "id" in member
@@ -34,9 +32,9 @@ type SuperGroupMetaData = Omit<
   "id" | "type" | "title" | "username" | "pinned_message"
 >;
 
-interface SuperGroupDetails<C extends Context>
+export interface SuperGroupDetails<C extends Context>
   extends Omit<Types.Chat.SupergroupChat, "type"> {
-  creator: TestUser<C> | Types.ChatMemberOwner | Types.User;
+  creator: Private<C> | Types.ChatMemberOwner | Types.User;
   anonymousOwner?: boolean;
   admins?: (Admin<C> | { admin: Admin<C>; appointedToBot: boolean })[];
   members?: Member<C>[];
@@ -73,7 +71,7 @@ export class Supergroup<C extends Context> {
   public readonly inviteLinks: Map<string, Types.ChatInviteLink> = new Map();
   public readonly chatJoinRequests: Map<number, Types.ChatJoinRequest> =
     new Map();
-  public message_id = 3; // :P
+  public message_id = 3;
 
   // Responses from the bot
   public responses: {
@@ -84,10 +82,7 @@ export class Supergroup<C extends Context> {
   // Updates from the group
   public updates: Types.Update[] = [];
 
-  constructor(
-    private environment: Chats<C>, // use it!
-    details: SuperGroupDetails<C>,
-  ) {
+  constructor(environment: Chats<C>, details: SuperGroupDetails<C>) {
     if (details.creator === undefined) {
       throw new Error("Cannot create a supergroup without a creator.");
     }

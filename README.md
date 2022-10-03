@@ -123,9 +123,9 @@ bot. In the first case, it'll look like:
 
 ## Chat types
 
-### <samp>TestUser</samp>
+### <samp>Private</samp>
 
-Defined at: <samp> [src/chat_types/user.ts](./src/chat_types/user.ts)</samp>
+Defined at: <samp> [private.ts](./private.ts)</samp>
 
 Represents a Telegram user (Private chat). They can send, edit, forward, pin
 messages; send commands, media; query inline and click buttons. And stop, block,

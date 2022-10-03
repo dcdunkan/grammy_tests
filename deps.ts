@@ -34,3 +34,45 @@ export type Payload<M extends Methods<R>, R extends RawApi> = M extends unknown
   : never;
 export type ApiCallResult<M extends Methods<R>, R extends RawApi> = R[M] extends
   (...args: unknown[]) => unknown ? Awaited<ReturnType<R[M]>> : never;
+
+// `equals` modified from std/testing
+export function objectEquals(c: unknown, d: unknown): boolean {
+  const seen = new Map();
+  return (function compare(a: unknown, b: unknown): boolean {
+    if (Object.is(a, b)) {
+      return true;
+    }
+    if (a && typeof a === "object" && b && typeof b === "object") {
+      if (seen.get(a) === b) {
+        return true;
+      }
+      if (Object.keys(a || {}).length !== Object.keys(b || {}).length) {
+        return false;
+      }
+      seen.set(a, b);
+      const merged = { ...a, ...b };
+      for (
+        const key of [
+          ...Object.getOwnPropertyNames(merged),
+          ...Object.getOwnPropertySymbols(merged),
+        ]
+      ) {
+        type Key = keyof typeof merged;
+        if (!compare(a && a[key as Key], b && b[key as Key])) {
+          return false;
+        }
+        if (((key in a) && (!(key in b))) || ((key in b) && (!(key in a)))) {
+          return false;
+        }
+      }
+      return true;
+    }
+    return false;
+  })(c, d);
+}
+
+// Date format in Telegram API results
+export function getDate() {
+  // Thanks @KnorpelSenf (https://t.me/grammyjs/76466)
+  return Math.trunc(Date.now() / 1000);
+}
