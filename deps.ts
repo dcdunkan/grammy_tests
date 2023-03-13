@@ -1,28 +1,25 @@
-import { InputFile } from "https://lib.deno.dev/x/grammy@1.x/mod.ts";
-import { InputFileProxy } from "https://lib.deno.dev/x/grammy@1.x/types.ts";
+export * as Types from "https://deno.land/x/grammy@v1.14.1/types.ts";
+export type {
+  Bot,
+  Context,
+  RawApi,
+  Transformer,
+} from "https://deno.land/x/grammy@v1.14.1/mod.ts";
 
-// All of these types were imported from grammyjs/grammY source.
-type GrammyTypes_ = InputFileProxy<InputFile>;
-type Telegram = GrammyTypes_["Telegram"];
-type Opts<M extends keyof GrammyTypes_["Telegram"]> = GrammyTypes_["Opts"][M];
+// a basic debug implementation
+import * as c from "https://deno.land/std@0.179.0/fmt/colors.ts";
+const COLORS = [c.red, c.green, c.blue, c.magenta, c.yellow, c.gray];
 
-export type RawApi = {
-  [M in keyof Telegram]: Parameters<Telegram[M]>[0] extends undefined
-    ? (signal?: AbortSignal) => Promise<ReturnType<Telegram[M]>>
-    : (
-      args: Opts<M>,
-      signal?: AbortSignal,
-    ) => Promise<ReturnType<Telegram[M]>>;
-};
+function colorFn(fn: (s: string) => string) {
+  return Deno.noColor ? (s: string) => s : fn;
+}
 
-export type Methods<R extends RawApi> = string & keyof R;
-export type Payload<M extends Methods<R>, R extends RawApi> = M extends unknown
-  ? R[M] extends (signal?: AbortSignal) => unknown // deno-lint-ignore ban-types
-    ? {} // deno-lint-ignore no-explicit-any
-  : R[M] extends (args: any, signal?: AbortSignal) => unknown
-    ? Parameters<R[M]>[0]
-  : never
-  : never;
-
-export * as GrammyTypes from "https://lib.deno.dev/x/grammy@1.x/types.ts";
-export { Bot, Context } from "https://lib.deno.dev/x/grammy@1.x/mod.ts";
+export function debug(ns: string) {
+  let last: number;
+  ns = colorFn(COLORS[Math.floor(Math.random() * COLORS.length)])(ns);
+  return function (...data: unknown[]) {
+    const now = Date.now(), diff = `+${now - (last ?? now)}ms`;
+    last = now;
+    console.error(ns, ...data, `${colorFn(c.cyan)(diff)}`);
+  };
+}

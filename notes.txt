@@ -1,0 +1,26 @@
+FAQ
+
+Why is all property public?
+
+- It is a testing library, advanced users should be able
+  to use every aspect of the environment.
+- Even tho all the method mapping can be stored in a single
+  file, its easier to split them apart.
+
+Any plans to implement the not implemented methods?
+
+No. They are excluded because they are more related to setting up
+the bot (or bot server) rather than to the functionalities of the
+bot. Here is the list of excluded methods if you're interested:
+- close
+- logOut
+- setWebhook
+- getWebhookInfo
+- deleteWebhook
+- getUpdates 
+
+TODO
+
+- Validate types of payload.
+- Ping @Aquathing for help in validating.
+- Dummy user/chat generator with names.
