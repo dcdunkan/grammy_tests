@@ -1,17 +1,28 @@
-FAQ
 
-Why is all property public?
+=========================== NOTES ==============================
+
+Some development notes about the tests framework. Notes includes
+some answers for frequently asked questions or in another words,
+answers for the questions that I may ask myself later, "WHY?".
+It also contains some general to-do list. Additional note on it:
+Search "TODO" in the source code to find more detailed list.
+
+============================ FAQ ===============================
+
+# Why are all the properties public? ------------------------- #
 
 - It is a testing library, advanced users should be able
   to use every aspect of the environment.
 - Even tho all the method mapping can be stored in a single
   file, its easier to split them apart.
 
-Any plans to implement the not implemented methods?
+# Any plans to implement the not implemented methods? -------- #
 
-No. They are excluded because they are more related to setting up
-the bot (or bot server) rather than to the functionalities of the
-bot. Here is the list of excluded methods if you're interested:
+No. They are excluded because they are more related to setting
+up the bot (or bot server) rather than to the functionalities
+of the bot. Here is the list of excluded methods if you're
+interested:
+
 - close
 - logOut
 - setWebhook
@@ -19,8 +30,18 @@ bot. Here is the list of excluded methods if you're interested:
 - deleteWebhook
 - getUpdates 
 
-TODO
+# Any ignore payload parameters? ----------------------------- #
+
+Yes. The following parameters are not implemented:
+
+- disable_web_page_preview: Doesn't make sense to have it.
+
+=========================== TODO ===============================
 
 - Validate types of payload.
-- Ping @Aquathing for help in validating.
+- Ping @Aquathing and @KnorpelSenf for help in validating.
 - Dummy user/chat generator with names.
+
+================================================================
+
+(c) 2023 | Dunkan

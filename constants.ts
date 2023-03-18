@@ -1,6 +1,10 @@
 import { Types } from "./deps.ts";
+import { BotCommands, BotDescriptions } from "./types.ts";
 
-export const defaultBotAdministratorRights = {
+export const defaultBotAdministratorRights: Record<
+  "groups" | "channels",
+  Types.ChatAdministratorRights
+> = {
   groups: {
     "can_manage_chat": false,
     "can_change_info": false,
@@ -27,9 +31,26 @@ export const defaultBotAdministratorRights = {
   },
 };
 
+export const defaultChatPermissions: Types.ChatPermissions = {
+  can_send_messages: true,
+  can_send_polls: true,
+  can_invite_users: true,
+  can_change_info: true,
+  can_send_audios: true,
+  can_send_photos: true,
+  can_send_videos: true,
+  can_pin_messages: true,
+  can_manage_topics: false,
+  can_send_documents: true,
+  can_send_video_notes: true,
+  can_send_voice_notes: true,
+  can_send_other_messages: true,
+  can_add_web_page_previews: true,
+};
+
 export const MenuButtonDefault: Types.MenuButton = { type: "default" };
 
-export const BotCommandsDefault = {
+export const BotCommandsDefault: BotCommands = {
   default: { "": [] },
   all_private_chats: { "": [] },
   all_group_chats: { "": [] },
@@ -37,4 +58,8 @@ export const BotCommandsDefault = {
   chat: {},
   chat_member: {},
   chat_administrators: {},
+};
+
+export const BotDescriptionsDefault: BotDescriptions = {
+  "": { description: "", short_description: "" },
 };

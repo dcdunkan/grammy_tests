@@ -1,13 +1,11 @@
 <samp>
 <!-- yeah. monospace! -->
 
-**WARNING: DO NOT USE THIS YET.**
-
-**Test framework for grammY**
+### Test framework for grammY
 
 A work in progress framework for testing Telegram bots made using the grammY
 Telegram bot framework. Read more about grammY here: <https://grammy.dev>. The
-only thing grammY lack is a good testing framework. This repository is only an
+only thing grammY lacks is a good testing framework. This repository is only an
 attempt to make it possible.
 
 Note: The framework is currently only for Deno. Node.js support will be added
@@ -15,14 +13,15 @@ iff this is properly finished.
 
 Not many features at the moment:
 
-<!-- All chat environments synced well -->
+<!-- All chat environments synced very well, btw. -->
 
 - Dynamic API responses.
 - Supports all types of chats.
 
 **Installation**
 
-As said, currently only for Deno. You can import from GitHub raw URLs.
+As said, currently only for Deno. You can import from GitHub raw URLs as this
+not have been published in <https://deno.land/x> yet.
 
 ```ts
 // consider using versioned (commit) urls tho.
@@ -30,6 +29,8 @@ import { Chats } from "https://raw.githubusercontent.com/dcdunkan/tests/refine-2
 ```
 
 **Usage**
+
+Here is a minimal example:
 
 ```ts
 /// file: bot.ts
@@ -42,9 +43,9 @@ bot.command("start", async (ctx) => {
 });
 
 // DO NOT START YOUR BOT HERE. READ ABOUT IT BELOW.
+```
 
-// ----------------
-
+```ts
 /// file: bot_test.ts
 
 import { bot } from "./bot.ts";
@@ -72,9 +73,9 @@ Deno.test("Start command", async () => {
 ```
 
 > its response payload becomes available in the `last` object.
->
-> the `responses` contains all of the responses and `updates` contains all the
-> updates that have been sent to the user.
+
+the `responses` contains all of the responses and `updates` contains all the
+updates that have been sent to the user.
 
 So, that's a simple enough setup. Now if you run the test, you should see a
 bunch of green OKs printing out in the terminal.
@@ -89,8 +90,7 @@ Consider reading what official grammY documentation says about testing your
 bots: <https://grammy.dev/advanced/deployment.html#testing>.
 
 This framework handles takes care of what you read: it handles all the outgoing
-API requests (from the bot) very well; And... _drumroll_ the results are
-completely dynamic!
+API requests (from the bot) very well; and the results are completely dynamic!
 
 Also with easy methods and the good enough chat environment mockings, this
 framework helps you to write tests very easily.
@@ -100,8 +100,10 @@ A much more detailed explanation will be added here later on.
 ---
 
 > `refine-2`?
->
-> Yes, refine 1 didn't go very well, neither the before-refine.
+
+Yes, refine 1 didn't go very well, neither the non-refined.
+
+---
 
 Licensed under MIT | (c) 2023 Dunkan
 

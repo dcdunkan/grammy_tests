@@ -1,51 +1,19 @@
-/**
- * List of methods currently (Bot API 6.5) available in Telegram Bot API
- * categorized into several sections for ease of implementation.
- */
 export const METHODS = {
-  /**
-   * Methods that have no relation with how the bot responds. In other words,
-   * methods that are more related to the setup of the bot rather than its
-   * functionality. And implementing them is a waste of time cuz it makes no sense.
-   */
-  excluded: [
+  // Getting Updates
+  getting_updates: [
     "getUpdates",
     "setWebhook",
-    "getWebhookInfo",
     "deleteWebhook",
+    "getWebhookInfo",
+  ],
+  // Setup
+  setup: [
+    "getMe",
     "logOut",
     "close",
   ],
-  /**
-   * Methods that don't necessarily need a chat to work -- More related to bot.
-   */
-  bot: [
-    "getMe",
-    "getFile",
-    "setMyCommands",
-    "deleteMyCommands",
-    "getMyCommands",
-    "setChatMenuButton",
-    "getChatMenuButton",
-    "setMyDefaultAdministratorRights",
-    "getMyDefaultAdministratorRights",
-  ],
-  /** Standalone methods related to stickers. */
-  sticker: [
-    "getStickerSet",
-    "getCustomEmojiStickers",
-    "uploadStickerFile",
-    "createNewStickerSet",
-    "addStickerToSet",
-    "setStickerPositionInSet",
-    "deleteStickerFromSet",
-    "setStickerSetThumb",
-  ],
-  /**
-   * Methods related to messaging and managing the messages. Chats are required
-   * for calling these methods as they are bound to a specific chat.
-   */
-  message: [
+  // Messages
+  messages: [
     "sendMessage",
     "forwardMessage",
     "copyMessage",
@@ -65,16 +33,13 @@ export const METHODS = {
     "sendPoll",
     "sendDice",
     "sendChatAction",
-    "sendSticker",
-    "editMessageText",
-    "editMessageCaption",
-    "editMessageMedia",
-    "editMessageReplyMarkup",
-    "stopPoll",
-    "deleteMessage",
+    "getUserProfilePhotos",
+    "getFile",
+    "answerCallbackQuery",
   ],
-  /** Methods for managing chats */
-  chat: [
+  // Chat Management
+  chat_management: [
+    "kickChatMember",
     "banChatMember",
     "unbanChatMember",
     "restrictChatMember",
@@ -99,14 +64,14 @@ export const METHODS = {
     "leaveChat",
     "getChat",
     "getChatAdministrators",
+    "getChatMembersCount",
     "getChatMemberCount",
     "getChatMember",
     "setChatStickerSet",
     "deleteChatStickerSet",
-    "getUserProfilePhotos",
   ],
-  /** Methods related to forums */
-  forum: [
+  /** Forum Management */
+  forum_management: [
     "getForumTopicIconStickers",
     "createForumTopic",
     "editForumTopic",
@@ -120,24 +85,64 @@ export const METHODS = {
     "hideGeneralForumTopic",
     "unhideGeneralForumTopic",
   ],
-  /** Some unclassified methods (may be classified later) */
-  other: [
-    "answerCallbackQuery",
+  /** Bot Settings */
+  bot_settings: [
+    "setMyCommands",
+    "deleteMyCommands",
+    "getMyCommands",
+    "setChatMenuButton",
+    "getChatMenuButton",
+    "setMyDescription",
+    "getMyDescription",
+    "setMyShortDescription",
+    "getMyShortDescription",
+    "setMyDefaultAdministratorRights",
+    "getMyDefaultAdministratorRights",
+  ],
+  // Updating Messages
+  updating_messages: [
+    "editMessageText",
+    "editMessageCaption",
+    "editMessageMedia",
+    "editMessageReplyMarkup",
+    "stopPoll",
+    "deleteMessage",
+  ],
+  // Stickers
+  stickers: [
+    "sendSticker",
+    "getStickerSet",
+    "getCustomEmojiStickers",
+    "uploadStickerFile",
+    "createNewStickerSet",
+    "addStickerToSet",
+    "setStickerPositionInSet",
+    "deleteStickerFromSet",
+    "setStickerEmojiList",
+    "setStickerKeywords",
+    "setStickerMaskPosition",
+    "setStickerSetTitle",
+    "deleteStickerSet",
+    "setStickerSetThumbnail",
+    "setCustomEmojiStickerSetThumbnail",
+  ],
+  // Inline Mode
+  inline_mode: [
     "answerInlineQuery",
     "answerWebAppQuery",
   ],
-  /** Methods related to payments */
+  // Payments
   payments: [
     "sendInvoice",
     "createInvoiceLink",
     "answerShippingQuery",
     "answerPreCheckoutQuery",
   ],
-  /** Methods related to passports */
-  passport: [
+  // Telegram Passport
+  telegram_passport: [
     "setPassportDataErrors",
   ],
-  /** Methods relates to games */
+  // Games
   games: [
     "sendGame",
     "setGameScore",

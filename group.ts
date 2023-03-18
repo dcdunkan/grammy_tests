@@ -21,7 +21,7 @@ export class GroupChat<C extends Context> {
   chat_id: number;
   chat: Types.Chat.GroupChat;
 
-  private bot: Bot<C>;
+  #bot: Bot<C>;
 
   chatMenuButton: Types.MenuButton;
 
@@ -34,8 +34,10 @@ export class GroupChat<C extends Context> {
   banned: Map<Types.User["id"], Types.ChatMemberBanned> = new Map();
   pinnedMessages: Types.Message[];
 
+  messages: Map<Types.MessageId["message_id"], Types.Message> = new Map();
+
   constructor(private env: Chats<C>, public details: GroupChatDetails) {
-    this.bot = env.getBot();
+    this.#bot = env.getBot();
 
     this.creator = details.creator;
     details.members?.map((m) => this.members.set(m.user.id, m));

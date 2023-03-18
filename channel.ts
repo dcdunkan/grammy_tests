@@ -21,7 +21,7 @@ export class ChannelChat<C extends Context> {
   chat_id: number;
   chat: Types.Chat.ChannelChat;
 
-  private bot: Bot<C>;
+  #bot: Bot<C>;
 
   // Channel Related
   creator: Types.ChatMemberOwner;
@@ -32,16 +32,18 @@ export class ChannelChat<C extends Context> {
     (Types.ChatMemberMember | Types.ChatMemberRestricted)
   > = new Map();
   banned: Map<Types.User["id"], Types.ChatMemberBanned> = new Map();
-  pinnedPosts: Types.Message[];
+  pinnedMessages: Types.Message[];
+
+  messages: Map<Types.MessageId["message_id"], Types.Message> = new Map();
 
   constructor(private env: Chats<C>, public details: ChannelChatDetails) {
-    this.bot = env.getBot();
+    this.#bot = env.getBot();
 
     this.creator = details.creator;
     details.administrators?.map((m) => this.administrators.set(m.user.id, m));
     details.members?.map((m) => this.members.set(m.user.id, m));
     details.banned?.map((m) => this.banned.set(m.user.id, m));
-    this.pinnedPosts = details.pinnedPosts ?? [];
+    this.pinnedMessages = details.pinnedPosts ?? [];
 
     this.chat_id = details.id;
     this.chat = {
@@ -56,7 +58,7 @@ export class ChannelChat<C extends Context> {
     return {
       ...this.chat,
       ...this.details.additional,
-      pinned_message: this.pinnedPosts.at(-1),
+      pinned_message: this.pinnedMessages.at(-1),
     };
   }
 }

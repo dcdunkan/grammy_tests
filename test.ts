@@ -1,7 +1,15 @@
 import { Chats } from "./chats.ts";
-import { Bot } from "https://deno.land/x/grammy@v1.14.1/mod.ts";
+import { Bot } from "https://deno.land/x/grammy@v1.15.1/mod.ts";
 
+/// Setup Bot
 const bot = new Bot("token");
+
+/* bot.command("start", async (ctx) => {
+  const sent = await ctx.reply("Hello.");
+  console.log(sent); // Dynamically generated!
+}); */
+
+/// Test setup
 const chats = new Chats(bot);
 
 const user = chats.newUser({
@@ -24,13 +32,17 @@ const group = chats.newGroup({
 });
 
 user.join(group.chat_id);
+user.onNotification("message", (m) => {
+  console.log("User recieved a message from the bot saying", m.text);
+});
 // Send a message to the bot.
-user.sendMessage("Hello");
+// await user.sendMessage("Hello");
+await user.command("start");
 // Send a message to the group.
-user.in(group).sendMessage("Hi everyone!");
+await user.in(group).sendMessage("Hi everyone!");
 
 // or first declare a state of the user:
 const userInGroup = user.in(group);
-userInGroup.sendMessage("Hi again!");
+await userInGroup.sendMessage("Hi again!");
 // and other properties can be accesses as well:
 // userInGroup.sendVideo(...)

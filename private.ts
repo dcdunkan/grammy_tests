@@ -1,9 +1,13 @@
-import { Bot, Context, debug, RawApi, Types } from "./deps.ts";
-import type { Chats } from "./chats.ts";
+import { Bot, Context, debug, Types } from "./deps.ts";
+import { Chats } from "./chats.ts";
 import { date } from "./helpers.ts";
-import { GroupChat } from "./group.ts";
-import { SupergroupChat } from "./supergroup.ts";
-import { ChannelChat } from "./channel.ts";
+import {
+  ApiResponse,
+  InteractableChats,
+  InteractableChatTypes,
+  MaybePromise,
+  NotificationHandler,
+} from "./types.ts";
 
 type DetailsExceptObvious = Omit<Types.Chat.PrivateChat, "type">;
 type DetailsFromGetChat = Omit<
@@ -21,20 +25,9 @@ export interface PrivateChatDetails extends DetailsExceptObvious, UserDetails {
   chatMenuButton?: Types.MenuButton;
 }
 
-type InteractableChats =
-  | Types.Chat.GroupChat
-  | Types.Chat.SupergroupChat
-  | Types.Chat.ChannelChat;
-
-type InteractableChatTypes<C extends Context> =
-  | GroupChat<C>
-  | SupergroupChat<C>
-  | ChannelChat<C>;
-
-type ApiResponse = {
-  method: keyof RawApi;
-  payload?: unknown;
-};
+type PrivateChatNotificationHandlers = Partial<{
+  "message": (message: Types.Message) => MaybePromise<unknown>;
+}>;
 
 export class PrivateChat<C extends Context> {
   readonly type = "private";
@@ -44,19 +37,22 @@ export class PrivateChat<C extends Context> {
   user: Types.User;
   ownerOf: Set<Types.Chat["id"]> = new Set();
 
-  private bot: Bot<C>;
+  #bot: Bot<C>;
 
   chatMenuButton: Types.MenuButton;
 
   // Private chat related
   pinnedMessages: Types.Message[];
 
-  private d: ReturnType<typeof debug>;
+  eventHandlers: PrivateChatNotificationHandlers = {};
+
+  d: ReturnType<typeof debug>;
 
   /** Updates sent by the user to the bot */
-  private updates: Types.Update[] = [];
-  private responses: ApiResponse[] = [];
+  updates: Types.Update[] = [];
+  responses: ApiResponse[] = [];
 
+  messages: Map<Types.MessageId["message_id"], Types.Message> = new Map();
   message_id = 1;
 
   get messageId() {
@@ -64,8 +60,7 @@ export class PrivateChat<C extends Context> {
   }
 
   constructor(private env: Chats<C>, public details: PrivateChatDetails) {
-    this.bot = env.getBot();
-
+    this.#bot = env.getBot();
     this.pinnedMessages = details.pinnedMessages ?? [];
 
     this.chat_id = details.chat?.id ?? details.id;
@@ -89,7 +84,7 @@ export class PrivateChat<C extends Context> {
 
     this.d = debug(`${user.first_name} (P:${user.id})`);
 
-    this.bot.api.config.use((prev, method, payload, signal) => {
+    this.#bot.api.config.use((prev, method, payload, signal) => {
       if ("chat_id" in payload && payload.chat_id === this.chat_id) {
         this.responses.push({ method, payload });
       }
@@ -105,131 +100,107 @@ export class PrivateChat<C extends Context> {
     };
   }
 
+  /**
+   * Use this method for imitating the user as in a chat, i.e.,
+   * as in a group or supergroup or channel. It internally only
+   * changes the chat object used in the sending updates. The
+   * further chained methods will be bound to the chat. Returns
+   * a private chat instance with chat related properties are
+   * changed to the specified chat properties.
+   */
+  in(chat: InteractableChatTypes<C>) {
+    return new PrivateChat(this.env, {
+      ...this.details,
+      chat: chat.chat,
+      chatMenuButton: undefined,
+      pinnedMessages: undefined,
+      additional: undefined,
+    });
+  }
+
+  /**
+   * **Remember, that the event handlers are only called when the bot
+   * is interacting only with the user.**
+   *
+   * Set a event handler using this function. For example, when
+   * the bot sends a messsage, the user will receive a new message
+   * event, and those events can be handled by registering a handler.
+   */
+  onEvent(
+    notification: keyof PrivateChatNotificationHandlers,
+    handler: NotificationHandler,
+  ) {
+    this.eventHandlers[notification] = handler;
+  }
+
+  /** Make the user a premium subscriber. */
+  subscribePremium() {
+    this.user.is_premium = true;
+  }
+
+  /** Yes, and suddenly the user hates premium. */
+  unsubscribePremium() {
+    this.user.is_premium = undefined;
+  }
+
+  // TODO: Chat join request thingy.
+  /** Join a group or channel. */
   join(chatId: number) {
-    const chat = this.env.chats.get(chatId);
-    if (chat === undefined) {
-      throw new Error(`Chat ${chatId} not found for ${this.user.id} to join.`);
-    }
+    const status = this.env.userIs(this.user.id, chatId);
+    const chat = this.env.chats.get(chatId)!;
     if (chat.type === "private") {
-      throw new Error(
-        `\
-Chat ${chatId} is a private chat. Send a direct message to that chat. \
-It does not make sense for a private chat to "join" another private chat.`,
-      );
+      throw new Error(`Makes no sense "joining" a private chat ${chatId}`);
     }
-
-    if (chat.creator.user.id === this.user.id) {
-      this.d(`user is the creator lol`);
+    if (status === "banned") throw new Error("User is banned from the chat");
+    if (status === "left") {
+      chat.members.set(this.user.id, { status: "member", user: this.user });
+      this.d(`Joined the ${chat.type} "${chat.chat.title}" (${chatId})`);
       return true;
     }
-
-    if (chat.members.has(this.user.id)) {
-      this.d(`Already a member of the chat ${chatId}`);
-      return true;
-    }
-
-    if (chat.banned.has(this.user.id)) {
-      const { until_date } = chat.banned.get(this.user.id)!;
-      this.d(
-        `user is banned at ${chatId}${
-          until_date === 0
-            ? " FOREVER!"
-            : ` until ${until_date} (${new Date(until_date)})`
-        }`,
-      );
-      return false;
-    }
-
-    chat.members.set(this.user.id, { user: this.user, status: "member" });
-    this.d(`Joined the ${chat.type} "${chat.chat.title}" (${chatId})`);
+    this.d(`User is already a member of the chat ${chatId}`);
     return true;
   }
 
+  /** Leave a group or channel. */
   leave(chatId: number) {
-    const chat = this.env.chats.get(chatId);
-    if (chat === undefined) {
-      throw new Error(`Chat ${chatId} not found for ${this.user.id} to leave.`);
-    }
-
+    const status = this.env.userIs(this.user.id, chatId);
+    const chat = this.env.chats.get(chatId)!;
     if (chat.type === "private") {
-      throw new Error(
-        `\
-${chatId} is a private chat. It doesn't make sense to leave a private chat.
-Either block the user or the delete the chat history with the user.`,
-      );
+      throw new Error(`Makes no sense "leaving" a private chat ${chatId}`);
     }
-
-    if (chat.creator.user.id === this.user.id) {
-      this.d(`user is the creator. beware of the action!`);
+    if (status === "banned") throw new Error("User is already banned!");
+    if (status === "left") {
+      this.d("User has already left.");
       return true;
     }
 
-    if (!chat.members.has(this.user.id)) {
-      this.d(`Wasn't a member of the chat ${chatId} anyway.`);
-      return true;
-    }
-
-    if (chat.banned.has(this.user.id)) {
-      const { until_date: u } = chat.banned.get(this.user.id)!;
-      this.d(
-        `can't join. user is banned${u === 0 ? " forever" : ` until ${u}`}`,
-      );
-      return true; // well, it is technically "leaving".
-    }
-
+    if (status === "owner") this.d("WARNING: user is the owner of the chat");
     chat.members.delete(this.user.id);
-    this.d(`Left the chat ${chat.chat.title} (${chatId})`);
+    this.d(`Left the ${chat.type} "${chat.chat.title}" (${chatId})`);
     return true;
   }
 
-  sendMessage(text: string) {
-    // TODO: check if the user is banned/restricted in groups
-    if (this.chat.type === "channel") {
-      const chat = this.env.chats.get(this.chat.id);
-      if (!chat) throw new Error("Channel not found");
-      if (chat.type !== "channel") {
-        throw new Error("Weird case, its not a channel");
-      }
-      const isCreator = chat.creator.user.id === this.user.id;
-      const isAdmin = chat.administrators.has(this.user.id);
-      if (!isCreator && !isAdmin) {
-        throw new Error(
-          "Can't post in channel because the user is neither the creator or an admin.",
-        );
-      }
-    } else if (this.chat.type === "supergroup") {
-      const chat = this.env.chats.get(this.chat.id);
-      if (!chat) throw new Error("Chat not found");
-      if (chat.type !== "supergroup") {
-        throw new Error("Weird, its not a supergroup");
-      }
-      const isCreator = chat.creator.user.id === this.user.id;
-      const member = chat.members.get(this.user.id);
-      const admin = chat.administrators.has(this.user.id);
-      if (!isCreator && !admin) {
-        if (!member) throw new Error("Not even a member");
-        if (member.status === "restricted") {
-          if (!member.can_send_messages) {
-            if (member.until_date === 0) {
-              throw new Error("user is restricted to send messages forever");
-            } else {
-              if (member.until_date > Date.now()) {
-                throw new Error(
-                  `user is restricted to send messages until ${member.until_date}`,
-                );
-              } else {
-                chat.members.delete(this.user.id); // remove "restricted"
-                chat.members.set(this.user.id, {
-                  status: "member",
-                  user: this.user,
-                });
-              }
-            }
-          }
-        }
-      }
+  /** Send a message in the chat. */
+  sendMessage(text: string, options?: {
+    replyTo?:
+      | Types.MessageId["message_id"]
+      | NonNullable<Types.Message["reply_to_message"]>;
+    entities?: Types.MessageEntity[];
+  }) {
+    if (!this.env.userCan(this.user.id, this.chat.id, "can_send_messages")) {
+      throw new Error("User have no permission to send message to the chat.");
     }
-    const common = { message_id: this.messageId, date: date(), text };
+    const common = {
+      message_id: this.messageId,
+      date: date(),
+      text,
+      entities: options?.entities,
+      reply_to_message: typeof options?.replyTo === "number"
+        ? this.messages.get(options.replyTo) as NonNullable<
+          Types.Message["reply_to_message"]
+        >
+        : options?.replyTo,
+    };
     const update: Omit<Types.Update, "update_id"> = this.chat.type === "channel"
       ? { channel_post: { ...common, chat: this.chat } }
       : { message: { ...common, chat: this.chat, from: this.user } };
@@ -238,13 +209,15 @@ Either block the user or the delete the chat history with the user.`,
     return this.env.sendUpdate(validated);
   }
 
-  in(chat: InteractableChatTypes<C>) {
-    return new PrivateChat(this.env, {
-      ...this.details,
-      chat: chat.chat,
-      chatMenuButton: undefined,
-      pinnedMessages: undefined,
-      additional: undefined,
+  /** Send a command in the chat, optionally with a match. */
+  command(cmd: string, match?: string) {
+    const text = `/${cmd}${match ? ` ${match}` : ""}`;
+    return this.sendMessage(text, {
+      entities: [{
+        type: "bot_command",
+        offset: 0,
+        length: cmd.length + 1,
+      }],
     });
   }
 }

@@ -1,5 +1,6 @@
 import { Bot, Context, Types } from "./deps.ts";
 import type { Chats } from "./chats.ts";
+import { defaultChatPermissions } from "./constants.ts";
 
 type DetailsExceptObvious = Omit<Types.Chat.SupergroupChat, "type">;
 type DetailsFromGetChat = Omit<
@@ -22,7 +23,7 @@ export class SupergroupChat<C extends Context> {
   chat_id: number;
   chat: Types.Chat.SupergroupChat;
 
-  private bot: Bot<C>;
+  #bot: Bot<C>;
 
   chatMenuButton: Types.MenuButton;
 
@@ -36,9 +37,12 @@ export class SupergroupChat<C extends Context> {
   > = new Map();
   banned: Map<Types.User["id"], Types.ChatMemberBanned> = new Map();
   pinnedMessages: Types.Message[];
+  permissions: Types.ChatPermissions;
+
+  messages: Map<Types.MessageId["message_id"], Types.Message> = new Map();
 
   constructor(private env: Chats<C>, public details: SupergroupChatDetails) {
-    this.bot = env.getBot();
+    this.#bot = env.getBot();
 
     this.creator = details.creator;
     details.administrators?.map((m) => this.administrators.set(m.user.id, m));
@@ -57,6 +61,9 @@ export class SupergroupChat<C extends Context> {
 
     this.chatMenuButton = details.chatMenuButton ??
       env.defaultChatMenuButton;
+
+    this.permissions = details.additional?.permissions ??
+      defaultChatPermissions;
   }
 
   getChat(): Types.Chat.SupergroupGetChat {
