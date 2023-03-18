@@ -6,7 +6,7 @@ export const api = {
   /** Current Bot API version */
   BOT_API_VERSION: "6.6",
   /** Return API result */
-  result<T>(result: T): Promise<Types.ApiSuccess<T>> {
+  result<T>(result: T): Promise<Types.ApiResponse<T>> {
     return Promise.resolve({ ok: true, result });
   },
   /** Return API error */

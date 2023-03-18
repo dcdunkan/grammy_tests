@@ -42,13 +42,11 @@ type Category = keyof typeof METHODS;
 export type Methods<T extends Category> = typeof METHODS[T][number];
 export type AllMethods = Methods<Category>;
 
-type ApiCallResult<M extends keyof RawApi> = RawApi[M] extends
-    (...args: unknown[]) => unknown ? Awaited<ReturnType<RawApi[M]>> : never;
-
-export type Handler<C extends Context, M extends keyof RawApi> = (
+// TODO: Is there no other method for satisfying everyone.
+export type Handler<C extends Context, M extends keyof Types.ApiMethods> = (
   environment: Chats<C>,
-  payload: Parameters<RawApi[M]>[0],
-) => Promise<Types.ApiSuccess<ApiCallResult<M>> | Types.ApiError>;
+  payload: Parameters<Types.ApiMethods[M]>[0],
+) => Promise<Types.ApiResponse<ReturnType<Types.ApiMethods[M]>>>;
 
 export type Handlers<
   C extends Context,

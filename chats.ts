@@ -83,7 +83,7 @@ export class Chats<C extends Context> {
 
     const handlers = bakeHandlers<C>();
     this.bot.api.config.use((prev, method, payload, signal) => {
-      const handler = handlers["sendMessage"];
+      const handler = handlers[method];
       return handler ? handler(this, payload) : prev(method, payload, signal);
     });
 

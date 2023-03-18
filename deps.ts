@@ -1,9 +1,9 @@
 export * as Types from "https://deno.land/x/grammy@v1.15.1/types.ts";
 export type {
+  ApiCallFn,
   Bot,
   Context,
   RawApi,
-  ApiCallFn
 } from "https://deno.land/x/grammy@v1.15.1/mod.ts";
 
 // export type { Handler as HTMLParserHandler } from "https://deno.land/x/htmlparser@v4.1.1/htmlparser2/Parser.ts";
