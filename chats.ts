@@ -84,7 +84,10 @@ export class Chats<C extends Context> {
     const handlers = bakeHandlers<C>();
     this.bot.api.config.use((prev, method, payload, signal) => {
       const handler = handlers[method];
-      return handler ? handler(this, payload) : prev(method, payload, signal);
+      return handler
+        // deno-lint-ignore no-explicit-any
+        ? handler(this, payload) as any // TODO: Fix the type issue.
+        : prev(method, payload, signal);
     });
 
     this.d = debug("chats");

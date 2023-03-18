@@ -4,10 +4,10 @@ import { Bot } from "https://deno.land/x/grammy@v1.15.1/mod.ts";
 /// Setup Bot
 const bot = new Bot("token");
 
-/* bot.command("start", async (ctx) => {
+bot.command("start", async (ctx) => {
   const sent = await ctx.reply("Hello.");
   console.log(sent); // Dynamically generated!
-}); */
+});
 
 /// Test setup
 const chats = new Chats(bot);
@@ -32,7 +32,7 @@ const group = chats.newGroup({
 });
 
 user.join(group.chat_id);
-user.onNotification("message", (m) => {
+user.onEvent("message", (m) => {
   console.log("User recieved a message from the bot saying", m.text);
 });
 // Send a message to the bot.

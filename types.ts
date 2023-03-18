@@ -43,10 +43,10 @@ export type Methods<T extends Category> = typeof METHODS[T][number];
 export type AllMethods = Methods<Category>;
 
 // TODO: Is there no other method for satisfying everyone.
-export type Handler<C extends Context, M extends keyof Types.ApiMethods> = (
+export type Handler<C extends Context, M extends keyof RawApi> = (
   environment: Chats<C>,
-  payload: Parameters<Types.ApiMethods[M]>[0],
-) => Promise<Types.ApiResponse<ReturnType<Types.ApiMethods[M]>>>;
+  payload: Parameters<RawApi[M]>[0],
+) => Promise<Types.ApiResponse<Awaited<ReturnType<RawApi[M]>>>>;
 
 export type Handlers<
   C extends Context,
