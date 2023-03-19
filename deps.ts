@@ -1,6 +1,5 @@
 export * as Types from "https://deno.land/x/grammy@v1.15.1/types.ts";
 export type {
-  ApiCallFn,
   Bot,
   Context,
   RawApi,

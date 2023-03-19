@@ -1,7 +1,16 @@
 /** List of API errors in the format: [HTTP status code, Error Message] */
 export const ERRORS = {
-  chat_not_found: [404, "Chat not found"],
-  its_a_channel: [400, "Chat is a channel"],
   not_implemented: [501, "Not Implemented"],
+  excluded_method: [
+    501,
+    "This method is not implemented and is excluded from \
+implementing, most likely because its not worth it or does not \
+make sense implementing it because it is related to setting up \
+the bot and has no use in testing.",
+  ],
+  chat_not_found: [404, "Chat not found"],
+  its_private_chat: [400, "Chat is a private"],
+  its_channel_chat: [400, "Chat is a channel"],
+  chat_member_not_found: [404, "Chat member not found"],
   reply_to_message_not_found: [404, "Reply to message not found"],
 } as const;

@@ -1,7 +1,7 @@
 <samp>
 <!-- yeah. monospace! -->
 
-### Test framework for grammY
+## Test framework for grammY
 
 A work in progress framework for testing Telegram bots made using the grammY
 Telegram bot framework. Read more about grammY here: <https://grammy.dev>. The
@@ -20,17 +20,17 @@ Not many features at the moment:
 
 **Installation**
 
-As said, currently only for Deno. You can import from GitHub raw URLs as this
-not have been published in <https://deno.land/x> yet.
+As said, currently available only for Deno. You can import from GitHub raw URLs
+as this not have been published in <https://deno.land/x> yet.
 
 ```ts
 // consider using versioned (commit) urls tho.
 import { Chats } from "https://raw.githubusercontent.com/dcdunkan/tests/refine-2/mod.ts";
 ```
 
-**Usage**
+### Usage
 
-Here is a minimal example:
+Here is a simple example:
 
 ```ts
 /// file: bot.ts
@@ -39,7 +39,8 @@ import { Bot } from "https://deno.land/x/grammy/mod.ts";
 export const bot = new Bot("token");
 
 bot.command("start", async (ctx) => {
-  await ctx.reply("How you doin'?");
+  const sent = await ctx.reply("How you doin'?");
+  console.log(sent); // Dynamically generated API result!
 });
 
 // DO NOT START YOUR BOT HERE. READ ABOUT IT BELOW.
@@ -58,8 +59,14 @@ const chats = new Chats(bot);
 // create a user to interact with the bot.
 const user = chats.newUser({/* details of the user */});
 
+// setup a event handler if you like to:
+user.onEvent("message", (message) => {
+  // do something with the message. or,
+  console.log("Message recieved");
+});
+
 // demo: send a message to the bot.
-await user.sendMessage("Hello there, Mr. Bot!");
+await user.sendMessage("Hello there!");
 
 // nice. let's *test* something basic:
 Deno.test("Start command", async () => {

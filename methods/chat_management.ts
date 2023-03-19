@@ -1,4 +1,4 @@
-import type { Context } from "../deps.ts";
+import type { Context, Types } from "../deps.ts";
 import type { Handler, Handlers, Methods } from "../types.ts";
 import { api } from "../helpers.ts";
 
@@ -53,15 +53,58 @@ export function chatMethods<C extends Context>(): Handlers<
   const unpinAllChatMessages: Handler<C, "unpinAllChatMessages"> = () =>
     api.error("not_implemented");
   const leaveChat: Handler<C, "leaveChat"> = () => api.error("not_implemented");
-  const getChat: Handler<C, "getChat"> = () => api.error("not_implemented");
+
+  const getChat: Handler<C, "getChat"> = (env, payload) => {
+    const chat = typeof payload.chat_id === "string"
+      ? env.resolveUsername(payload.chat_id)
+      : env.chats.get(payload.chat_id);
+    if (chat === undefined) return api.error("chat_not_found");
+    return api.result(chat.getChat());
+  };
+
   const getChatAdministrators: Handler<C, "getChatAdministrators"> = () =>
     api.error("not_implemented");
-  const getChatMembersCount: Handler<C, "getChatMemberCount"> = () =>
-    api.error("not_implemented");
-  const getChatMemberCount: Handler<C, "getChatMemberCount"> = () =>
-    api.error("not_implemented");
-  const getChatMember: Handler<C, "getChatMember"> = () =>
-    api.error("not_implemented");
+
+  const getChatMemberCount: Handler<C, "getChatMemberCount"> = (
+    env,
+    payload,
+  ) => {
+    const chat = typeof payload.chat_id === "string"
+      ? env.resolveUsername(payload.chat_id)
+      : env.chats.get(payload.chat_id);
+    if (chat === undefined) return api.error("chat_not_found");
+    if (chat.type === "private") return api.error("its_private_chat");
+    let count = chat.members.size + 1; // 1 for chat owner.
+    if (chat.type !== "group") count += chat.administrators.size;
+    return api.result(count);
+  };
+
+  /** @deprecated */
+  const getChatMembersCount: Handler<
+    C,
+    "getChatMemberCount"
+  > = (env, payload) => {
+    return getChatMemberCount(env, { chat_id: payload.chat_id });
+  };
+
+  const getChatMember: Handler<C, "getChatMember"> = (env, payload) => {
+    const chat = typeof payload.chat_id === "string"
+      ? env.resolveUsername(payload.chat_id)
+      : env.chats.get(payload.chat_id);
+    if (chat === undefined) return api.error("chat_not_found");
+    // TODO: Does this return the member in private chat?
+    if (chat.type === "private") return api.error("its_private_chat");
+    let member: Types.ChatMember | undefined =
+      chat.creator.user.id === payload.user_id
+        ? chat.creator
+        : chat.members.get(payload.user_id) ?? chat.banned.get(payload.user_id);
+    if (chat.type !== "group") {
+      member ??= chat.administrators.get(payload.user_id);
+    }
+    if (member === undefined) return api.error("chat_member_not_found");
+    return api.result(member);
+  };
+
   const setChatStickerSet: Handler<C, "setChatStickerSet"> = () =>
     api.error("not_implemented");
   const deleteChatStickerSet: Handler<C, "deleteChatStickerSet"> = () =>

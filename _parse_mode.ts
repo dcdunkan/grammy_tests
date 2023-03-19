@@ -92,6 +92,7 @@ export class HTMLToTelegramHandler<C extends Context>
         if (!chat) {
           entityOptions["user"] = { id, is_bot: false } as Types.User;
         } else {
+          // TODO
         }
       } else {
         entityType = "url";

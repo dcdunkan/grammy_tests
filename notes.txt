@@ -1,5 +1,11 @@
 
-=========================== NOTES ==============================
+
+          ████████╗███████╗░██████╗████████╗░██████╗
+░░░░░░░░░░╚══██╔══╝██╔════╝██╔════╝╚══██╔══╝██╔════╝░░░░░░░░░░░░
+░░░░░░░░░░░░░██║░░░█████╗░░╚█████╗░░░░██║░░░╚█████╗░░░░░░░░░░░░░
+░░░░░░░░░░░░░██║░░░██╔══╝░░░╚═══██╗░░░██║░░░░╚═══██╗░░░░░░░░░░░░
+░░░░░░░░░░░░░██║░░░███████╗██████╔╝░░░██║░░░██████╔╝░░░░░░░░░░░░
+░░░░░░░░░░░░░╚═╝░░░╚══════╝╚═════╝░░░░╚═╝░░░╚═════╝░░░░░░░░░░░░░
 
 Some development notes about the tests framework. Notes includes
 some answers for frequently asked questions or in another words,
@@ -30,7 +36,7 @@ interested:
 - deleteWebhook
 - getUpdates 
 
-# Any ignore payload parameters? ----------------------------- #
+# Any ignored payload parameters? ---------------------------- #
 
 Yes. The following parameters are not implemented:
 
@@ -38,9 +44,22 @@ Yes. The following parameters are not implemented:
 
 =========================== TODO ===============================
 
+There are a lot more than this, but I'm only writing down the
+ones that are most important, and the ones that I'm most likely
+to forget and do something instead stupid. For more TODOs,
+search the codebase with the keyword: "TODO". Current list:
+
 - Validate types of payload.
 - Ping @Aquathing and @KnorpelSenf for help in validating.
 - Dummy user/chat generator with names.
+- Fix the type error occurred if the 'as any' is removed
+  from the main transformer middleware. (chats.ts)
+- Implement a proper file ID parser and packer.
+- Implement a parse-mode-d text to entities and vice versa.
+
+========================= QUESTIONS ============================
+
+- Does deleted accounts counts in getChatMemberCount?
 
 ================================================================
 

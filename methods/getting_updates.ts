@@ -7,13 +7,13 @@ export function gettingUpdatesMethods<C extends Context>(): Handlers<
   Methods<"getting_updates">
 > {
   const getUpdates: Handler<C, "getUpdates"> = () =>
-    api.error("not_implemented");
+    api.error("not_implemented", "Do not call getUpdates or bot.start()");
   const setWebhook: Handler<C, "setWebhook"> = () =>
-    api.error("not_implemented");
+    api.error("excluded_method");
   const deleteWebhook: Handler<C, "deleteWebhook"> = () =>
-    api.error("not_implemented");
+    api.error("excluded_method");
   const getWebhookInfo: Handler<C, "getWebhookInfo"> = () =>
-    api.error("not_implemented");
+    api.error("excluded_method");
 
   return {
     getUpdates,

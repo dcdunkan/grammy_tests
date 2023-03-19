@@ -5,8 +5,8 @@ import { Bot } from "https://deno.land/x/grammy@v1.15.1/mod.ts";
 const bot = new Bot("token");
 
 bot.command("start", async (ctx) => {
-  const sent = await ctx.reply("Hello.");
-  console.log(sent); // Dynamically generated!
+  /* const sent = */ await ctx.reply("Hello.");
+  // console.log(sent); // Dynamically generated!
 });
 
 /// Test setup
@@ -21,7 +21,7 @@ const user = chats.newUser({
   language_code: "en",
 });
 
-const group = chats.newGroup({
+/* const group = chats.newGroup({
   id: 234,
   title: "Movie Night",
   creator: {
@@ -32,8 +32,8 @@ const group = chats.newGroup({
 });
 
 user.join(group.chat_id);
-user.onEvent("message", (m) => {
-  console.log("User recieved a message from the bot saying", m.text);
+user.onEvent("message", () => {
+  // console.log("User recieved a message from the bot saying", m.text);
 });
 // Send a message to the bot.
 // await user.sendMessage("Hello");
@@ -45,4 +45,4 @@ await user.in(group).sendMessage("Hi everyone!");
 const userInGroup = user.in(group);
 await userInGroup.sendMessage("Hi again!");
 // and other properties can be accesses as well:
-// userInGroup.sendVideo(...)
+// userInGroup.sendVideo(...)*/

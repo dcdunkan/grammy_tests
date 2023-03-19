@@ -7,8 +7,8 @@ export function setupMethods<C extends Context>(): Handlers<
   Methods<"setup">
 > {
   const getMe: Handler<C, "getMe"> = (env) => api.result(env.getBot().botInfo);
-  const logOut: Handler<C, "logOut"> = () => api.error("not_implemented");
-  const close: Handler<C, "close"> = () => api.error("not_implemented");
+  const logOut: Handler<C, "logOut"> = () => api.error("excluded_method");
+  const close: Handler<C, "close"> = () => api.error("excluded_method");
 
   return { getMe, logOut, close };
 }

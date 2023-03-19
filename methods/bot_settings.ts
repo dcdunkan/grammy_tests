@@ -109,7 +109,7 @@ export function botSettingsMethods<C extends Context>(): Handlers<
     } else {
       const chat = env.chats.get(payload.chat_id);
       if (chat === undefined) return api.error("chat_not_found");
-      if (chat.type === "channel") return api.error("its_a_channel");
+      if (chat.type === "channel") return api.error("its_channel_chat");
       chat.chatMenuButton = menuButton;
     }
     return api.result(true);
@@ -121,29 +121,51 @@ export function botSettingsMethods<C extends Context>(): Handlers<
     }
     const chat = env.chats.get(payload.chat_id);
     if (chat === undefined) return api.error("chat_not_found");
-    if (chat.type === "channel") return api.error("its_a_channel");
+    if (chat.type === "channel") return api.error("its_channel_chat");
     return api.result(chat.chatMenuButton);
   };
 
   const setMyDescription: Handler<C, "setMyDescription"> = (env, payload) => {
     const language = payload.language_code ?? "";
-    if (env.descriptions[language] === undefined) {
-      env.descriptions[language] = CONSTANTS.BotDescriptionsDefault[""];
-    }
-    env.descriptions[language].description = payload.description ?? "";
+    env.descriptions[language] = {
+      ...(env.descriptions[language] ?? {}),
+      description: payload.description ?? "",
+    };
     return api.result(true);
   };
 
   const getMyDescription: Handler<C, "getMyDescription"> = (env, payload) => {
     const language = payload.language_code ?? "";
     return api.result({
-      description: env.descriptions[language]?.description ?? "",
+      description: (
+        env.descriptions[language] ?? env.descriptions[""]
+      )?.description ?? "",
     });
   };
-  const setMyShortDescription: Handler<C, "setMyShortDescription"> = () =>
-    api.error("not_implemented");
-  const getMyShortDescription: Handler<C, "getMyShortDescription"> = () =>
-    api.error("not_implemented");
+
+  const setMyShortDescription: Handler<
+    C,
+    "setMyShortDescription"
+  > = (env, payload) => {
+    const language = payload.language_code ?? "";
+    env.descriptions[language] = {
+      ...(env.descriptions[language] ?? {}),
+      short_description: payload.short_description ?? "",
+    };
+    return api.result(true);
+  };
+
+  const getMyShortDescription: Handler<
+    C,
+    "getMyShortDescription"
+  > = (env, payload) => {
+    const language = payload.language_code ?? "";
+    return api.result({
+      short_description: (
+        env.descriptions[language] ?? env.descriptions[""]
+      )?.short_description ?? "",
+    });
+  };
 
   const setMyDefaultAdministratorRights: Handler<
     C,
