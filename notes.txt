@@ -13,14 +13,14 @@ answers for the questions that I may ask myself later, "WHY?".
 It also contains some general to-do list. Additional note on it:
 Search "TODO" in the source code to find more detailed list.
 
-============================ FAQ ===============================
+==========================|| FAQ ||=============================
 
 # Why are all the properties public? ------------------------- #
 
-- It is a testing library, advanced users should be able
-  to use every aspect of the environment.
-- Even tho all the method mapping can be stored in a single
-  file, its easier to split them apart.
+-> It is a testing library, advanced users should be able
+   to use every aspect of the environment.
+-> Even tho all the method mapping can be stored in a single
+   file, its easier to split them apart.
 
 # Any plans to implement the not implemented methods? -------- #
 
@@ -40,26 +40,45 @@ interested:
 
 Yes. The following parameters are not implemented:
 
-- disable_web_page_preview: Doesn't make sense to have it.
+-> disable_web_page_preview: Doesn't make sense to have it.
 
-=========================== TODO ===============================
+==========================|| TODO ||============================
 
 There are a lot more than this, but I'm only writing down the
 ones that are most important, and the ones that I'm most likely
 to forget and do something instead stupid. For more TODOs,
 search the codebase with the keyword: "TODO". Current list:
 
-- Validate types of payload.
-- Ping @Aquathing and @KnorpelSenf for help in validating.
-- Dummy user/chat generator with names.
-- Fix the type error occurred if the 'as any' is removed
-  from the main transformer middleware. (chats.ts)
-- Implement a proper file ID parser and packer.
-- Implement a parse-mode-d text to entities and vice versa.
+-> Validate types of payload.
+-> Ping @Aquathing and @KnorpelSenf for help in validating.
+-> Dummy user/chat generator with names.
+-> Fix the type error occurred if the 'as any' is removed
+   from the main transformer middleware. (chats.ts)
+-> Implement a proper file ID parser and packer.
+-> Implement a parse-mode-d text to entities and vice versa.
 
-========================= QUESTIONS ============================
+========================|| IMPORTANT ||=========================
 
-- Does deleted accounts counts in getChatMemberCount?
+# Bad designs that I regret about -----------------------------#
+
+-> Change the bad design of the chat members system. It is bad
+   because its hard to maintain all the individual properties.
+   It'll be easier if it is simply a single set.
+   
+   The current design is split into individual variables:
+   * owner (creator)
+   * members (current members, restricted)
+   * administrators
+   * banned
+
+   The proposed design:
+   * members (creator, current, restricted, admin, banned)
+   * owner (Only the user ID of the owner for easy access)
+
+========================|| QUESTIONS ||=========================
+
+-> Does deleted accounts counts in getChatMemberCount?
+-> Does the user returned in getChatMember in a private chat?
 
 ================================================================
 
