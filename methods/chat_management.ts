@@ -62,8 +62,16 @@ export function chatMethods<C extends Context>(): Handlers<
     return api.result(chat.getChat());
   };
 
-  const getChatAdministrators: Handler<C, "getChatAdministrators"> = () =>
-    api.error("not_implemented");
+  const getChatAdministrators: Handler<C, "getChatAdministrators"> = (env, payload) => {
+    const chat = typeof payload.chat_id === "string"
+      ? env.resolveUsername(payload.chat_id)
+      : env.chats.get(payload.chat_id);
+    if (chat === undefined) return api.error("chat_not_found");
+    if (chat.type === "private") return api.error("its_private_chat");
+    if (chat.type === "group") return api.error("its_group_chat");
+    const administrators = Array.from(chat.administrators.values());
+    return api.result([...administrators, chat.creator]);
+  };
 
   const getChatMemberCount: Handler<C, "getChatMemberCount"> = (
     env,
@@ -101,7 +109,11 @@ export function chatMethods<C extends Context>(): Handlers<
     if (chat.type !== "group") {
       member ??= chat.administrators.get(payload.user_id);
     }
-    if (member === undefined) return api.error("chat_member_not_found");
+    if (member === undefined) {
+      const user = env.chats.get(payload.user_id);
+      if (user?.type !== "private") return api.error("its_not_private_chat");
+      return api.result({ status: "left", user: user.user });
+    }
     return api.result(member);
   };
 
