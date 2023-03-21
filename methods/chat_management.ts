@@ -62,7 +62,10 @@ export function chatMethods<C extends Context>(): Handlers<
     return api.result(chat.getChat());
   };
 
-  const getChatAdministrators: Handler<C, "getChatAdministrators"> = (env, payload) => {
+  const getChatAdministrators: Handler<C, "getChatAdministrators"> = (
+    env,
+    payload,
+  ) => {
     const chat = typeof payload.chat_id === "string"
       ? env.resolveUsername(payload.chat_id)
       : env.chats.get(payload.chat_id);

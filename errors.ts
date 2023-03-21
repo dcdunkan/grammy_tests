@@ -3,7 +3,7 @@ export const ERRORS = {
   not_implemented: [501, "Not Implemented"],
   excluded_method: [
     501,
-    "This method is not implemented and is excluded from \
+"This method is not implemented and is excluded from \
 implementing, most likely because its not worth it or does not \
 make sense implementing it because it is related to setting up \
 the bot and has no use in testing.",
