@@ -6,7 +6,6 @@ import type {
   EnvironmentOptions,
   InlineQueryResultCached,
   MyDefaultAdministratorRights,
-  UserStatus,
 } from "./types.ts";
 import { PrivateChat, PrivateChatDetails } from "./private.ts";
 import { GroupChat, GroupChatDetails } from "./group.ts";
@@ -14,7 +13,7 @@ import { SupergroupChat, SupergroupChatDetails } from "./supergroup.ts";
 import { ChannelChat, ChannelChatDetails } from "./channel.ts";
 import { bakeHandlers } from "./methods/mod.ts";
 import * as CONSTANTS from "./constants.ts";
-import { rand } from "./helpers.ts";
+import { isChatAdministratorRight, isChatPermission, rand } from "./helpers.ts";
 
 /** Emulates a Telegram environment, and everything's in it. */
 export class Chats<C extends Context> {
@@ -106,64 +105,54 @@ export class Chats<C extends Context> {
     }
   }
 
-  /**
-   * Status of the user in the given chat.
-   *
-   * - For private chat or if the user is chat owner, "owner".
-   * - If user is a banned member in multi-user chats, "banned".
-   * - If the user is admin in a supergroup or channel, returns "admin".
-   * - If the member is not currently in the chat, returns "left".
-   * - If the member is restricted, checks the restriction time
-   *   period, and if the user is still restricted returns
-   *   "restricted", if the user is left returns "left", and if
-   *   the user is still in the chat, "member".
-   */
-  userIs(userId: number, chatId: number): UserStatus {
+  getChatMember(
+    userId: number,
+    chatId: number,
+  ): Types.ChatMember | { status: "not-found" | "chat-not-found" } {
     const chat = this.chats.get(chatId);
-    if (chat === undefined) throw new Error("Chat not found");
+    if (chat === undefined) return { status: "chat-not-found" };
     if (chat.type === "private") {
       this.d("No need for checking if user is a member of private chat");
-      return chat.user.id === userId ? "owner" : "left";
+      return { status: "chat-not-found" }; // Yes, thats how Bot API works.
     }
-    if (chat.banned.has(userId)) return "banned";
-    if (chat.creator.user.id === userId) return "owner";
-    if (chat.type !== "group" && chat.administrators.has(userId)) {
-      return "admin";
-    }
-    const member = chat.members.get(userId);
-    if (member === undefined) return "left";
-    if (member.status === "member") return "member";
-    if (member.is_member) {
-      if (member.until_date > Date.now()) return "restricted";
-      chat.members.set(userId, { status: "member", user: member.user });
-      return "member";
-    } else {
-      chat.members.delete(userId);
-      return "left";
-    }
+    return chat.getChatMember(userId);
   }
 
   /** Does the user have the permission to do something in the chat. */
   userCan(
     userId: number,
     chatId: number,
-    permission: keyof Types.ChatPermissions,
+    permission:
+      | keyof Types.ChatPermissions
+      | keyof Types.ChatAdministratorRights,
   ): boolean {
-    const status = this.userIs(userId, chatId);
-    if (status === "banned" || status === "left") return false;
-    if (status === "owner" || status === "admin") return true;
+    const member = this.getChatMember(userId, chatId);
+
+    if (
+      member.status === "chat-not-found" ||
+      member.status === "not-found" ||
+      member.status === "kicked" ||
+      member.status === "left"
+    ) return false;
+    if (member.status === "creator") return true;
+    if (member.status === "administrator") {
+      if (isChatAdministratorRight(permission)) {
+        return !!member[permission];
+      }
+    }
+
+    if (!isChatPermission(permission)) {
+      throw new Error(`Invalid permission '${permission}'`);
+    }
+
+    if (member.status === "restricted") return !!member[permission];
+
     const chat = this.chats.get(chatId)!;
     if (chat.type === "channel") return false;
     if (chat.type === "private") return true; // never reached
     if (chat.type === "group") return true;
-    if (status === "member") {
-      return !!chat.permissions[permission];
-    }
-    if (status === "restricted") {
-      const member = chat.members.get(userId) as Types.ChatMemberRestricted;
-      return !!member[permission];
-    }
-    return false;
+
+    return !!chat.permissions[permission];
   }
 
   /** Create and register a new Telegram user in the environment. */

@@ -48,8 +48,9 @@ export function messagesMethods<C extends Context>(): Handlers<
     return api.error("not_implemented");
   };
 
-  const forwardMessage: Handler<C, "forwardMessage"> = () =>
-    api.error("not_implemented");
+  const forwardMessage: Handler<C, "forwardMessage"> = (env, payload) => {
+    return api.error("not_implemented");
+  };
   const copyMessage: Handler<C, "copyMessage"> = () =>
     api.error("not_implemented");
   const sendPhoto: Handler<C, "sendPhoto"> = () => api.error("not_implemented");

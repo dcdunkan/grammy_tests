@@ -52,7 +52,30 @@ export function chatMethods<C extends Context>(): Handlers<
     api.error("not_implemented");
   const unpinAllChatMessages: Handler<C, "unpinAllChatMessages"> = () =>
     api.error("not_implemented");
-  const leaveChat: Handler<C, "leaveChat"> = () => api.error("not_implemented");
+
+  const leaveChat: Handler<C, "leaveChat"> = (env, payload) => {
+    const chat = typeof payload.chat_id === "string"
+      ? env.resolveUsername(payload.chat_id)
+      : env.chats.get(payload.chat_id);
+    if (chat === undefined) return api.error("chat_not_found");
+    if (chat.type === "private") return api.error("private_chat_member_status");
+
+    const member = chat.getChatMember(env.getBot().botInfo.id);
+    if (member.status === "not-found") return api.error("chat_not_found"); // not reached
+    if (
+      member.status === "left" || member.status === "kicked" ||
+      (member.status === "restricted" && !member.is_member)
+    ) return api.error("not_a_member", "So cannot leave");
+
+    chat.isBotAMember = false;
+
+    if (member.status === "restricted") {
+      chat.members.set(member.user.id, { ...member, is_member: false });
+    } else {
+      chat.members.set(member.user.id, { status: "left", user: member.user });
+    }
+    return api.result(true);
+  };
 
   const getChat: Handler<C, "getChat"> = (env, payload) => {
     const chat = typeof payload.chat_id === "string"
@@ -62,35 +85,50 @@ export function chatMethods<C extends Context>(): Handlers<
     return api.result(chat.getChat());
   };
 
-  const getChatAdministrators: Handler<C, "getChatAdministrators"> = (
-    env,
-    payload,
-  ) => {
+  const getChatAdministrators: Handler<
+    C,
+    "getChatAdministrators"
+  > = (env, payload) => {
     const chat = typeof payload.chat_id === "string"
       ? env.resolveUsername(payload.chat_id)
       : env.chats.get(payload.chat_id);
     if (chat === undefined) return api.error("chat_not_found");
     if (chat.type === "private") return api.error("its_private_chat");
     if (chat.type === "group") return api.error("its_group_chat");
-    const administrators = Array.from(chat.administrators.values());
-    return api.result([...administrators, chat.creator]);
+
+    const administrators:
+      (Types.ChatMemberOwner | Types.ChatMemberAdministrator)[] = [];
+    for (const member of chat.members.values()) {
+      if (
+        member.status === "administrator" ||
+        member.status === "creator"
+      ) administrators.push(member);
+    }
+    return api.result(administrators);
   };
 
-  const getChatMemberCount: Handler<C, "getChatMemberCount"> = (
-    env,
-    payload,
-  ) => {
+  const getChatMemberCount: Handler<
+    C,
+    "getChatMemberCount"
+  > = (env, payload) => {
     const chat = typeof payload.chat_id === "string"
       ? env.resolveUsername(payload.chat_id)
       : env.chats.get(payload.chat_id);
     if (chat === undefined) return api.error("chat_not_found");
     if (chat.type === "private") return api.error("its_private_chat");
-    let count = chat.members.size + 1; // 1 for chat owner.
-    if (chat.type !== "group") count += chat.administrators.size;
-    return api.result(count);
+    let memberCount = 0;
+    for (const member of chat.members.values()) {
+      if (
+        member.status === "creator" ||
+        member.status === "member" ||
+        member.status === "administrator" ||
+        (member.status === "restricted" && member.is_member)
+      ) memberCount++;
+    }
+    return api.result(memberCount);
   };
 
-  /** @deprecated */
+  // deprecated
   const getChatMembersCount: Handler<
     C,
     "getChatMemberCount"
@@ -105,18 +143,8 @@ export function chatMethods<C extends Context>(): Handlers<
     if (chat === undefined) return api.error("chat_not_found");
     // TODO: Does this return the member in private chat?
     if (chat.type === "private") return api.error("its_private_chat");
-    let member: Types.ChatMember | undefined =
-      chat.creator.user.id === payload.user_id
-        ? chat.creator
-        : chat.members.get(payload.user_id) ?? chat.banned.get(payload.user_id);
-    if (chat.type !== "group") {
-      member ??= chat.administrators.get(payload.user_id);
-    }
-    if (member === undefined) {
-      const user = env.chats.get(payload.user_id);
-      if (user?.type !== "private") return api.error("its_not_private_chat");
-      return api.result({ status: "left", user: user.user });
-    }
+    const member = chat.getChatMember(payload.user_id);
+    if (member.status === "not-found") return api.error("user_not_found");
     return api.result(member);
   };
 

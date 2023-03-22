@@ -1,5 +1,10 @@
 import { Types } from "./deps.ts";
-import { ERRORS } from "./errors.ts";
+import { ERRORS, PREFIXES } from "./errors.ts";
+import {
+  defaultChatAdministratorRights,
+  defaultChatPermissions,
+} from "./constants.ts";
+import { ChatAdministratorRights, ChatPermissions } from "./types.ts";
 
 /** API related properties */
 export const api = {
@@ -21,7 +26,9 @@ export const api = {
     return Promise.resolve({
       ok: false,
       error_code: err[0],
-      description: `${err[1]}${message ? `: ${message}` : ""}`,
+      description: `${PREFIXES[err[0]] ? PREFIXES[err[0]] : ""}${err[1]}${
+        message ? `: ${message}` : ""
+      }`,
       ...(parameters ? { parameters } : {}),
     });
   },
@@ -42,4 +49,16 @@ function randomNumberInBetween(start: number, end: number) {
 /** Returns current time in Telegram's format. */
 export function date() {
   return Math.trunc(Date.now() / 1000);
+}
+
+export function isChatPermission(
+  permission: string,
+): permission is ChatPermissions {
+  return Object.keys(defaultChatPermissions).includes(permission);
+}
+
+export function isChatAdministratorRight(
+  permission: string,
+): permission is ChatAdministratorRights {
+  return Object.keys(defaultChatAdministratorRights).includes(permission);
 }

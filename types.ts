@@ -6,6 +6,10 @@ import type { ChannelChat } from "./channel.ts";
 import { METHODS } from "./methods/list.ts";
 import { Chats } from "./chats.ts";
 
+export type UserId = Types.User["id"];
+export type MessageId = Types.MessageId["message_id"];
+export type ChatId = Types.Chat["id"];
+
 export type MaybePromise<T> = T | Promise<T>;
 
 export type NotificationHandler = (
@@ -102,10 +106,5 @@ export type InlineQueryResultCached =
   | Types.InlineQueryResultCachedDocument
   | Types.InlineQueryResultCachedMpeg4Gif;
 
-export type UserStatus =
-  | "member"
-  | "owner"
-  | "admin"
-  | "left"
-  | "restricted"
-  | "banned";
+export type ChatPermissions = keyof Types.ChatPermissions;
+export type ChatAdministratorRights = keyof Types.ChatAdministratorRights;
