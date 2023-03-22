@@ -61,7 +61,9 @@ search the codebase with the keyword: "TODO". Current list:
 
 # Bad designs that I regret about -----------------------------#
 
--> Change the bad design of the chat members system. It is bad
+-> [DONE] <-----------------------------------------------------
+
+   Change the bad design of the chat members system. It is bad
    because its hard to maintain all the individual properties.
    It'll be easier if it is simply a single set.
    
