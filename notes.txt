@@ -57,6 +57,20 @@ search the codebase with the keyword: "TODO". Current list:
 -> Implement a proper file ID parser and packer.
 -> Implement a parse-mode-d text to entities and vice versa.
 
+METHODS/
+├[x] bot_settings
+├[:] chat_management
+├[ ] forum_management
+├[ ] games
+├[x] getting_updates
+├[ ] inline_mode
+├[:] messages
+├[ ] payments
+├[x] setup
+├[ ] stickers
+├[ ] telegram_passport
+└[ ] updating_messages
+
 ========================|| IMPORTANT ||=========================
 
 # Bad designs that I regret about -----------------------------#
