@@ -1,8 +1,10 @@
 import { Chats } from "./chats.ts";
-import { Bot } from "https://deno.land/x/grammy@v1.15.1/mod.ts";
+import { Bot, Context } from "https://deno.land/x/grammy@v1.15.1/mod.ts";
 
 /// Setup Bot
-const bot = new Bot("token");
+type MyContext = Context; // Can be extended.
+
+const bot = new Bot<MyContext>("token");
 
 bot.command("start", async (ctx) => {
   /* const sent = */ await ctx.reply("Hello.");
@@ -21,10 +23,10 @@ const user = chats.newUser({
   language_code: "en",
 });
 
-/* const group = chats.newGroup({
+const group = chats.newGroup({
   id: 234,
   title: "Movie Night",
-  creator: {
+  owner: {
     status: "creator",
     user: { id: 345, first_name: "The Owner", is_bot: false },
     is_anonymous: false,
@@ -45,4 +47,4 @@ await user.in(group).sendMessage("Hi everyone!");
 const userInGroup = user.in(group);
 await userInGroup.sendMessage("Hi again!");
 // and other properties can be accesses as well:
-// userInGroup.sendVideo(...)*/
+// userInGroup.sendVideo(...)
