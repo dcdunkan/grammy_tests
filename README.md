@@ -1,12 +1,14 @@
-> **Warning**: Unstable as it is a work in progress. Things could change.
+> **Warning**: Unstable.
 
-# Test framework for grammY
+# grammY Tests
+
+##### Test framework for grammY
 
 A **work-in-progress** framework for testing Telegram bots made using the grammY
-Telegram bot framework. Read more about grammY here: **<https://grammy.dev>**. grammY is a great framework and it's ecosystem provides everything for developing a bot.
+Telegram bot framework. Read more about grammY here: **<https://grammy.dev>**. grammY is a great framework and it's ecosystem provides everything for developing Telegram bots.
 
 However, grammY lacks one important thing. A testing framwork, a good one. And this repository is only an
-attempt to make one good. I've regretted some choices that I made in the past about the architecture of the library. So, I'm re-writing the whole thing until I get it right.
+attempt to make one. I've regretted some choices that I made in the past about the architecture of the library. So, I'm re-writing the whole thing until I get it right.
 
 #### Installation
 
@@ -16,62 +18,60 @@ You can import from GitHub raw URLs for now,
 as this haven't been published on <https://deno.land/x> yet.
 
 ```ts
-// Consider using versioned (commit) URLs.
 import { Chats } from "https://raw.githubusercontent.com/dcdunkan/tests/refine-2/mod.ts";
 ```
 
-## Getting Started
+> The URL above imports from this branch. It is recommended to use a versioned URL than this.
+
+## Writing Tests
 
 Here is a simple setup showing how you can test your bot. Note that the example is pretty basic at the moment. It'll be extended more as the implementation progresses.
 
+**`bot.ts`**
+
+This file is supposed to export the `Bot` instance. You can have the logic and handlers of the bot in this file.
+
 ```ts
-// @filename: ./bot.ts
-
 import { Bot } from "https://deno.land/x/grammy/mod.ts";
-export const bot = new Bot("token");
 
-bot.command("start", async (ctx) => {
-  const sent = await ctx.reply("How you doin'?");
-  console.log(sent); // Dynamically generated API result!
-});
+export const bot = new Bot(""); // <-- Put your token inside the quotes.
 
-// DO NOT START YOUR BOT HERE. READ ABOUT IT BELOW.
+bot.command("start", (ctx) => ctx.reply("How you doin'?"));
 ```
 
-```ts
-// @filename: ./bot_test.ts
+> **Warning**
+> 
+> Never start your bot in long polling (`bot.start()`) in `bot.ts` file (where you export the bot). It will cause issues with installing the transformer middlewares which is necessary for the test framework to function. To start your bot, create another file (perhaps `main.ts`?), import the bot there, start it there, and run that file.
 
+**`bot_test.ts`**
+
+```ts
+import { Chats } from "...";
 import { bot } from "./bot.ts";
-// and some assertion functions for testing:
 import { assertEquals } from "https://deno.land/std/testing/asserts.ts";
 
-// `chats` is like a whole Telegram instance.
 const chats = new Chats(bot);
 
-// create a user to interact with the bot.
+// Create a user to interact with the bot.
 const user = chats.newUser({/* details of the user */});
 
-// setup a event handler if you like to:
-user.onEvent("message", (message) => {
-  // do something with the message. or,
-  console.log("Message recieved");
-});
-
-// demo: send a message to the bot.
+// Send a message to the bot.
 await user.sendMessage("Hello there!");
 
-// nice. let's *test* something basic:
-Deno.test("Start command", async () => {
-  // a command (there are other methods as well):
-  await user.command("start");
+// Looking good.
 
-  // so the bot replies. and after the bot handles it,
-  // its response payload becomes available in the last object.
+// Let's actually test something: The start command.
+Deno.test("Start command", async () => {
+  await user.command("start");
+  // So the bot replies, and after the bot handles it,
+  // it's response payload becomes available in the last object.
   assertEquals(user.last.text, "How you doin'?");
 });
 ```
 
-> :bulb: **TIP**
+There are methods other than just `sendMessage` and `command`. You can try them out. If you want to see a more up-to-date (not exactly, but yes) example, that is used for testing the implementation while developing this library, checkout the **[example.ts](./example.ts)** file.
+
+> **TIP**
 >
 > > its response payload becomes available in the `last` object.
 >
@@ -80,10 +80,6 @@ Deno.test("Start command", async () => {
 
 That's a simple enough setup. Now you can run the test using `deno test`, and you should see a
 bunch of green OKs printing out in the terminal.
-
-**Warning**: Never start your bot in long polling (`bot.start()`) in `bot.ts` file (where you export the bot). It will cause issues with
-installing the transformer middlewares which is necessary for the test framework
-to function. To start your bot, create another file (perhaps `main.ts`?), import the bot there, start it there, and run that file.
 
 ## How Does This Work?
 
