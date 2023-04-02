@@ -10,7 +10,7 @@ attempt to make one good. I've regretted some choices that I made in the past ab
 
 #### Installation
 
-**Note**: This library is **only available** for Deno at the moment. Node.js support will land when the library is stable and published on <https://deno.land/x>.
+**Note**: This library is **only available for Deno** at the moment. Node.js support will land when the library is stable and published on <https://deno.land/x>.
 
 You can import from GitHub raw URLs for now,
 as this haven't been published on <https://deno.land/x> yet.
