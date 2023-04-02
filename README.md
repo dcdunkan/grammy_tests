@@ -20,7 +20,7 @@ as this haven't been published on <https://deno.land/x> yet.
 import { Chats } from "https://raw.githubusercontent.com/dcdunkan/tests/refine-2/mod.ts";
 ```
 
-### Getting Started
+## Getting Started
 
 Here is a simple setup showing how you can test your bot. Note that the example is pretty basic at the moment. It'll be extended more as the implementation progresses.
 
@@ -71,6 +71,8 @@ Deno.test("Start command", async () => {
 });
 ```
 
+> :bulb: **TIP**
+>
 > > its response payload becomes available in the `last` object.
 >
 > `chats.responses` is an array containing all of the responses and `chats.updates` is another array containing all the
@@ -79,18 +81,18 @@ Deno.test("Start command", async () => {
 That's a simple enough setup. Now you can run the test using `deno test`, and you should see a
 bunch of green OKs printing out in the terminal.
 
-**Warning**: Never start your bot in long polling (`bot.start()`). It will cause issues with
+**Warning**: Never start your bot in long polling (`bot.start()`) in `bot.ts` file (where you export the bot). It will cause issues with
 installing the transformer middlewares which is necessary for the test framework
-to function.
+to function. To start your bot, create another file (perhaps `main.ts`?), import the bot there, start it there, and run that file.
 
-### How Does This Work?
+## How Does This Work?
 
 First consider reading what the Official grammY Documentation says about testing your bots: <https://grammy.dev/advanced/deployment.html#testing>.
 
 This framework handles takes care of what you read there:
 
-- It handles all the outgoing API requests (from the bot) behind the curtain; and the dynamically generated API responses respects the environment the bot is in. So, it should work very well with get* calls and all.
-- Generating updates to force-test the bot can be hard and tedious. This framework provides enough methods to cover almost all of your needs.
+- It handles all the outgoing API requests (from the bot) behind the curtain; and the dynamically generated API responses respects the environment the bot is in. So, it should work very well with all of the methods.
+- Generating updates for force-testing the bot can be hard and tedious. This framework provides enough methods to cover almost all of your needs.
 
 > A much more detailed explanation will be added here later on.
 
