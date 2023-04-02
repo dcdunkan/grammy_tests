@@ -31,15 +31,14 @@ This file is supposed to export the `Bot` instance. You can have the logic and h
 
 ```ts
 import { Bot } from "https://deno.land/x/grammy/mod.ts";
-
 export const bot = new Bot(""); // <-- Put your token inside the quotes.
-
+// Middlewares and logic goes here. For this example,
+// we'll just register a /start command handler.
 bot.command("start", (ctx) => ctx.reply("How you doin'?"));
 ```
 
-> **Warning**
-> 
-> Never start your bot in long polling (`bot.start()`) in `bot.ts` file (where you export the bot). It will cause issues with installing the transformer middlewares which is necessary for the test framework to function. To start your bot, create another file (perhaps `main.ts`?), import the bot there, start it there, and run that file.
+> **Warning**:
+> Never start your bot in long polling (`bot.start()`) in the bot.ts file (where you export the bot). It will cause issues with installing the transformer middlewares which is necessary for the test framework to function. To start your bot, create another file (perhaps main.ts?), import the bot there, start it there, and run that file.
 
 **`bot_test.ts`**
 
@@ -69,11 +68,8 @@ Deno.test("Start command", async () => {
 
 There are methods other than just `sendMessage` and `command`. You can try them out. If you want to see a more up-to-date (not exactly, but yes) example, that is used for testing the implementation while developing this library, checkout the **[example.ts](./example.ts)** file.
 
-> **TIP**
->
-> > its response payload becomes available in the `last` object.
->
-> `chats.responses` is an array containing all of the responses and `chats.updates` is another array containing all the
+> **TIP**:
+> Like the `user.last` has the payload of the latest response, there is `user.responses`, containing all of the responses and `user.updates` is another array containing all the
 > updates that have been sent to the user.
 
 That's a simple enough setup. Now you can run the test using `deno test`, and you should see a
