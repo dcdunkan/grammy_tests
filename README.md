@@ -1,33 +1,28 @@
-## Test framework for grammY
+> **Warning**: Unstable as it is a work in progress. Things could change.
 
-A work in progress framework for testing Telegram bots made using the grammY
-Telegram bot framework. Read more about grammY here: <https://grammy.dev>. The
-only thing grammY lacks is a good testing framework. This repository is only an
-attempt to make it possible.
+# Test framework for grammY
 
-**Note**: The framework is currently only for Deno. Node.js support will be added
-iff this is properly finished.
+A **work-in-progress** framework for testing Telegram bots made using the grammY
+Telegram bot framework. Read more about grammY here: **<https://grammy.dev>**. grammY is a great framework and it's ecosystem provides everything for developing a bot.
 
-Not many features at the moment:
-
-<!-- All chat environments synced very well, btw. -->
-
-- Dynamic API responses.
-- Supports all types of chats.
+However, grammY lacks one important thing. A testing framwork, a good one. And this repository is only an
+attempt to make one good. I've regretted some choices that I made in the past about the architecture of the library. So, I'm re-writing the whole thing until I get it right.
 
 #### Installation
 
-As said, currently available only for Deno. You can import from GitHub raw URLs
-as this not have been published in <https://deno.land/x> yet.
+**Note**: This library is **only available** for Deno at the moment. Node.js support will land when the library is stable and published on <https://deno.land/x>.
+
+You can import from GitHub raw URLs for now,
+as this haven't been published on <https://deno.land/x> yet.
 
 ```ts
-// consider using versioned (commit) urls tho.
+// Consider using versioned (commit) URLs.
 import { Chats } from "https://raw.githubusercontent.com/dcdunkan/tests/refine-2/mod.ts";
 ```
 
-### Usage
+### Getting Started
 
-Here is a simple example:
+Here is a simple setup showing how you can test your bot. Note that the example is pretty basic at the moment. It'll be extended more as the implementation progresses.
 
 ```ts
 // @filename: ./bot.ts
@@ -78,29 +73,31 @@ Deno.test("Start command", async () => {
 
 > > its response payload becomes available in the `last` object.
 >
-> the `responses` contains all of the responses and `updates` contains all the
+> `chats.responses` is an array containing all of the responses and `chats.updates` is another array containing all the
 > updates that have been sent to the user.
 
-So, that's a simple enough setup. Now if you run the test using `deno test`, you should see a
+That's a simple enough setup. Now you can run the test using `deno test`, and you should see a
 bunch of green OKs printing out in the terminal.
 
-**WARNING**: Never start your bot in the bot.ts. It will cause issues with
+**Warning**: Never start your bot in long polling (`bot.start()`). It will cause issues with
 installing the transformer middlewares which is necessary for the test framework
 to function.
 
 ### How Does This Work?
 
-Consider reading what official grammY documentation says about testing your
-bots: <https://grammy.dev/advanced/deployment.html#testing>.
+First consider reading what the Official grammY Documentation says about testing your bots: <https://grammy.dev/advanced/deployment.html#testing>.
 
-This framework handles takes care of what you read: it handles all the outgoing
-API requests (from the bot) very well; and the results are completely dynamic!
+This framework handles takes care of what you read there:
 
-Also with easy methods and the good enough chat environment mockings, this
-framework helps you to write tests very easily.
+- It handles all the outgoing API requests (from the bot) behind the curtain; and the dynamically generated API responses respects the environment the bot is in. So, it should work very well with get* calls and all.
+- Generating updates to force-test the bot can be hard and tedious. This framework provides enough methods to cover almost all of your needs.
 
-A much more detailed explanation will be added here later on.
+> A much more detailed explanation will be added here later on.
 
 ---
 
-Licensed under MIT | (c) 2023 Dunkan
+<div align="center">
+
+Licensed under MIT (c) 2023 Dunkan
+
+</div>
