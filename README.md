@@ -3,7 +3,7 @@
 # Test framework for grammY
 
 A **work-in-progress** framework for testing Telegram bots made using the grammY
-Telegram bot framework. Read more about grammY here: **<https://grammy.dev>**. grammY is a great framework and it's ecosystem provides everything for developing Telegram bots.
+Telegram bot framework. grammY is a great framework for developing Telegram bots and it's ecosystem provides everything you need for that. You can read more about grammY here: **<https://grammy.dev>**.
 
 However, grammY lacks one important thing. A testing framwork, a good one. And this repository is only an
 attempt to make one. I've regretted some choices that I made in the past about the architecture of the library. So, I'm re-writing the whole thing until I get it right.
