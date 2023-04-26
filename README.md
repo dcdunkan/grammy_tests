@@ -90,6 +90,6 @@ This framework handles takes care of what you read there:
 
 <div align="center">
 
-Licensed under MIT (c) 2023 Dunkan
+Licensed under MIT &copy; 2023 Dunkan
 
 </div>
