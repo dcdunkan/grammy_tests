@@ -1,4 +1,4 @@
-> **Warning**: Unstable.
+> **Warning**: This is the re-write branch and it IS unstable. If you want to use a little-broken-and-old version of this library, switch to the main branch.
 
 # Test framework for grammY
 
@@ -38,7 +38,7 @@ bot.command("start", (ctx) => ctx.reply("How you doin'?"));
 ```
 
 > **Warning**:
-> Don't start your bot in long polling (`bot.start()`) in the bot.ts file as this framework isn't supposed to be used like that. To start your bot in long pollingm create another file (perhaps a main.ts?), import the bot there, start it there and run that file.
+> Don't start your bot in long polling (`bot.start()`) in the bot.ts file as this framework isn't supposed to be used like that. To start your bot in long polling, create another file (perhaps a main.ts?), import the bot there, start it there and run that file.
 
 <!-- > Never start your bot in long polling (`bot.start()`) in the bot.ts file (where you export the bot). It will cause issues with installing the transformer middlewares which is necessary for the test framework to function. To start your bot, create another file (perhaps main.ts?), import the bot there, start it there, and run that file. -->
 
