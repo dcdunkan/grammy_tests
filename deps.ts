@@ -1,28 +1,25 @@
-import { InputFile } from "https://lib.deno.dev/x/grammy@1.x/mod.ts";
-import { InputFileProxy } from "https://lib.deno.dev/x/grammy@1.x/types.ts";
+export * as Types from "https://deno.land/x/grammy@v1.15.1/types.ts";
+export type {
+  Bot,
+  Context,
+  RawApi,
+} from "https://deno.land/x/grammy@v1.15.1/mod.ts";
 
-// All of these types were imported from grammyjs/grammY source.
-type GrammyTypes_ = InputFileProxy<InputFile>;
-type Telegram = GrammyTypes_["Telegram"];
-type Opts<M extends keyof GrammyTypes_["Telegram"]> = GrammyTypes_["Opts"][M];
+// export type { Handler as HTMLParserHandler } from "https://deno.land/x/htmlparser@v4.1.1/htmlparser2/Parser.ts";
+// export { Parser as HTMLParser } from "https://deno.land/x/htmlparser@v4.1.1/htmlparser2/Parser.ts";
 
-export type RawApi = {
-  [M in keyof Telegram]: Parameters<Telegram[M]>[0] extends undefined
-    ? (signal?: AbortSignal) => Promise<ReturnType<Telegram[M]>>
-    : (
-      args: Opts<M>,
-      signal?: AbortSignal,
-    ) => Promise<ReturnType<Telegram[M]>>;
-};
+// a basic debug implementation
+import * as c from "https://deno.land/std@0.180.0/fmt/colors.ts";
+const COLORS = [c.red, c.green, c.blue, c.magenta, c.yellow, c.gray];
 
-export type Methods<R extends RawApi> = string & keyof R;
-export type Payload<M extends Methods<R>, R extends RawApi> = M extends unknown
-  ? R[M] extends (signal?: AbortSignal) => unknown // deno-lint-ignore ban-types
-    ? {} // deno-lint-ignore no-explicit-any
-  : R[M] extends (args: any, signal?: AbortSignal) => unknown
-    ? Parameters<R[M]>[0]
-  : never
-  : never;
+function colorFn(fn: (s: string) => string) {
+  return Deno.noColor ? (s: string) => s : fn;
+}
 
-export * as GrammyTypes from "https://lib.deno.dev/x/grammy@1.x/types.ts";
-export { Bot, Context } from "https://lib.deno.dev/x/grammy@1.x/mod.ts";
+export function debug(ns: string) {
+  ns = colorFn(COLORS[Math.floor(Math.random() * COLORS.length)])(ns);
+  return function (...data: unknown[]) {
+    const now = new Date().toLocaleTimeString("en-US", { hour12: false });
+    console.error(c.cyan(now), ns, ...data);
+  };
+}

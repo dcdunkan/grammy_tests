@@ -1,0 +1,101 @@
+
+
+          ████████╗███████╗░██████╗████████╗░██████╗
+░░░░░░░░░░╚══██╔══╝██╔════╝██╔════╝╚══██╔══╝██╔════╝░░░░░░░░░░░░
+░░░░░░░░░░░░░██║░░░█████╗░░╚█████╗░░░░██║░░░╚█████╗░░░░░░░░░░░░░
+░░░░░░░░░░░░░██║░░░██╔══╝░░░╚═══██╗░░░██║░░░░╚═══██╗░░░░░░░░░░░░
+░░░░░░░░░░░░░██║░░░███████╗██████╔╝░░░██║░░░██████╔╝░░░░░░░░░░░░
+░░░░░░░░░░░░░╚═╝░░░╚══════╝╚═════╝░░░░╚═╝░░░╚═════╝░░░░░░░░░░░░░
+
+Some development notes about the tests framework. Notes includes
+some answers for frequently asked questions or in another words,
+answers for the questions that I may ask myself later, "WHY?".
+It also contains some general to-do list. Additional note on it:
+Search "TODO" in the source code to find more detailed list.
+
+==========================|| FAQ ||=============================
+
+# Why are all the properties public? ------------------------- #
+
+-> It is a testing library, advanced users should be able
+   to use every aspect of the environment.
+-> Even tho all the method mapping can be stored in a single
+   file, its easier to split them apart.
+
+# Any plans to implement the not implemented methods? -------- #
+
+No. They are excluded because they are more related to setting
+up the bot (or bot server) rather than to the functionalities
+of the bot. Here is the list of excluded methods if you're
+interested:
+
+- close
+- logOut
+- setWebhook
+- getWebhookInfo
+- deleteWebhook
+- getUpdates 
+
+# Any ignored payload parameters? ---------------------------- #
+
+Yes. The following parameters are not implemented:
+
+-> disable_web_page_preview: Doesn't make sense to have it.
+
+==========================|| TODO ||============================
+
+There are a lot more than this, but I'm only writing down the
+ones that are most important, and the ones that I'm most likely
+to forget and do something instead stupid. For more TODOs,
+search the codebase with the keyword: "TODO". Current list:
+
+-> Validate types of payload.
+-> Ping @Aquathing and @KnorpelSenf for help in validating.
+-> Dummy user/chat generator with names.
+-> Fix the type error occurred if the 'as any' is removed
+   from the main transformer middleware. (chats.ts)
+-> Implement a proper file ID parser and packer.
+-> Implement a parse-mode-d text to entities and vice versa.
+
+METHODS/
+├[x] bot_settings
+├[:] chat_management
+├[ ] forum_management
+├[ ] games
+├[x] getting_updates
+├[ ] inline_mode
+├[:] messages
+├[ ] payments
+├[x] setup
+├[ ] stickers
+├[ ] telegram_passport
+└[ ] updating_messages
+
+========================|| IMPORTANT ||=========================
+
+# Bad designs that I regret about -----------------------------#
+
+-> [DONE] <-----------------------------------------------------
+
+   Change the bad design of the chat members system. It is bad
+   because its hard to maintain all the individual properties.
+   It'll be easier if it is simply a single set.
+   
+   The current design is split into individual variables:
+   * owner (creator)
+   * members (current members, restricted)
+   * administrators
+   * banned
+
+   The proposed design:
+   * members (creator, current, restricted, admin, banned)
+   * owner (Only the user ID of the owner for easy access)
+
+========================|| QUESTIONS ||=========================
+
+-> Does deleted accounts counts in getChatMemberCount?
+-> Does the user returned in getChatMember in a private chat?
+
+================================================================
+
+(c) 2023 | Dunkan

@@ -1,158 +1,97 @@
-<h1 align="center">🧪 grammY Tests</h1>
+> **Warning**: This is the re-write branch and it IS unstable. If you want to use a little-broken-and-old version of this library, switch to the main branch.
 
-**Work in progress!**
+# Test framework for grammY
 
-Testing framework for Telegram bots written using [grammY](https://grammy.dev).
-Written in [TypeScript](https://typescript.org) and [Deno](https://deno.land/).
+A **work-in-progress** framework for testing Telegram bots made using the grammY
+Telegram bot framework. grammY is a great framework for developing Telegram bots and it's ecosystem provides everything you need for that. You can read more about grammY here: **<https://grammy.dev>**.
 
-Check out the test examples in the [tests](/tests/) folder. The file
-[bot.ts](/tests/bot.ts) contains an example logic of the bot we want to write
-tests for. [user.test.ts](/tests/user.test.ts) has an example of
-[test user instance](#testuser), which sends fake updates and checks whether
-your bot replies as expected or not.
+However, grammY lacks one important thing. A testing framwork, a good one. And this repository is only an
+attempt to make one. I've regretted some choices that I made in the past about the architecture of the library. So, I'm re-writing the whole thing until I get it right.
 
-## Writing tests
+#### Installation
 
-Export the
-[`Bot`](https://doc.deno.land/https://deno.land/x/grammy/mod.ts/~/Bot) instance
-you created.
+**Note**: This library is **only available for Deno** at the moment. Node.js support will land when the library is stable and published on <https://deno.land/x>.
+
+You can import from GitHub raw URLs for now,
+as this haven't been published on <https://deno.land/x> yet.
+
+```ts
+import { Chats } from "https://raw.githubusercontent.com/dcdunkan/tests/refine-2/mod.ts";
+```
+
+> The URL above imports from this branch. It is recommended to use a versioned URL than this.
+
+## Writing Tests
+
+Here is a simple setup showing how you can test your bot. Note that the example is pretty basic at the moment. It'll be extended more as the implementation progresses.
+
+**`bot.ts`**
+
+This file is supposed to export the `Bot` instance. You can have the logic and handlers of the bot in this file.
 
 ```ts
 import { Bot } from "https://deno.land/x/grammy/mod.ts";
-export const bot = new Bot("BOT_TOKEN");
-// ...Your bot's handlers and logic goes here.
+export const bot = new Bot(""); // <-- Put your token inside the quotes.
+// Middlewares and logic goes here. For this example,
+// we'll just register a /start command handler.
+bot.command("start", (ctx) => ctx.reply("How you doin'?"));
 ```
 
-For now, consider the following simple program as the bot's logic.
+> **Warning**:
+> Don't start your bot in long polling (`bot.start()`) in the bot.ts file as this framework isn't supposed to be used like that. To start your bot in long polling, create another file (perhaps a main.ts?), import the bot there, start it there and run that file.
+
+<!-- > Never start your bot in long polling (`bot.start()`) in the bot.ts file (where you export the bot). It will cause issues with installing the transformer middlewares which is necessary for the test framework to function. To start your bot, create another file (perhaps main.ts?), import the bot there, start it there, and run that file. -->
+
+**`bot_test.ts`**
 
 ```ts
-bot.command("start", async (ctx) => {
-  await ctx.reply("Hello there!");
-});
-
-bot.hears("Hi", async (ctx) => {
-  await ctx.reply("Hi!");
-});
-```
-
-Now the bot we are testing has a start command handler which replies "Hello
-there!" and a "Hi" listener which says "Hi!" back.
-
-But, to make sure that our bot works as we want it to be, let's add some tests.
-
-First, Import the bot object we created first to the test file.
-
-```ts
-import { bot } from "./path/to/your/bot/file.ts";
-```
-
-Create a chat "manager" instance and create a user. With that user, we can send
-fake updates to the bot and make sure that the bot responds as expected.
-
-```ts
-import { Chats } from "https://raw.githubusercontent.com/dcdunkan/tests/main/mod.ts";
-
-// A testing helper function from Deno standard library.
+import { Chats } from "...";
+import { bot } from "./bot.ts";
 import { assertEquals } from "https://deno.land/std/testing/asserts.ts";
 
 const chats = new Chats(bot);
-const user = chats.newUser({
-  id: 1234567890,
-  first_name: "Test user",
-  username: "test_user",
+
+// Create a user to interact with the bot.
+const user = chats.newUser({/* details of the user */});
+
+// Send a message to the bot.
+await user.sendMessage("Hello there!");
+
+// Looking good.
+
+// Let's actually test something: The start command.
+Deno.test("Start command", async () => {
+  await user.command("start");
+  // So the bot replies, and after the bot handles it,
+  // it's response payload becomes available in the last object.
+  assertEquals(user.last.text, "How you doin'?");
 });
 ```
 
-- Does the bot send "Hello there!" as expected, for the <samp>/start</samp>
-  command?
-  ```ts
-  Deno.test("start command", async () => {
-    await user.command("start");
-    assertEquals(user.last.text, "Hello there!");
-  });
-  ```
+There are methods other than just `sendMessage` and `command`. You can try them out. If you want to see a more up-to-date (not exactly, but yes) example, that is used for testing the implementation while developing this library, checkout the **[example.ts](./example.ts)** file.
 
-  <ins>What's happening here?</ins>
+> **TIP**:
+> Like the `user.last` has the payload of the latest response, there is `user.responses`, containing all of the responses and `user.updates` is another array containing all the
+> updates that have been sent to the user.
 
-  <samp><b>user.<i>command</i>("start");</b></samp>
+That's a simple enough setup. Now you can run the test using `deno test`, and you should see a
+bunch of green OKs printing out in the terminal.
 
-  is going to send a <samp>/start</samp> command to the bot. Then we asserts the
-  text reply of the bot `user.last.text`, to the expected reply, "Hello,
-  there!". If the logic is right, our test should pass.
+## How Does This Work?
 
-- Does the bot reply "Hi!" upon hearing "Hi" from the user?
-  ```ts
-  Deno.test("hi", async () => {
-    await user.sendMessage("Hi");
-    assertEquals(user.last.text, "Hi!");
-  });
-  ```
+First consider reading what the Official grammY Documentation says about testing your bots: <https://grammy.dev/advanced/deployment.html#testing>.
 
-  <ins>What's happening here?</ins>
+This framework handles takes care of what you read there:
 
-  <samp><b>user.<i>sendMessage</a></i>("Hi");</b></samp>
+- It handles all the outgoing API requests (from the bot) behind the curtain; and the dynamically generated API responses respects the environment the bot is in. So, it should work very well with all of the methods.
+- Generating updates for force-testing the bot can be hard and tedious. This framework provides enough methods to cover almost all of your needs.
 
-  This sends a text message saying "Hi" to the bot. According to the hears
-  listener logic, the bot should be replying "Hi!" back. Just like with the
-  start command, we can compare the expected reply against `user.last.text`,
-  which points to the text in the last message the bot sent.
-
-Now let's run the tests using
-[Deno's built-in test runner](https://deno.land/manual/testing).
-
-```bash
-deno test # You might pass permission flags like --allow-env if needed.
-```
-
-If everything's fine, and your tests were successful, which means your bot is
-working as expected, you will see the `deno test` command logging a bunch of
-green OK-s. It works! 🎉
-
-### Updates and Responses
-
-<samp><b>user.last</b></samp> contains payload of the last response sent by the
-bot. In the first case, it'll look like:
-
-```jsonc
-{
-  "chat_id": 1234567890,
-  "text": "Hello there!"
-}
-```
-
-- We can access the text that bot is replying from `user.last.text`
-- The actual last full response will be the last element of `user.responses`
-- You can also get the updates (requests) the user sent from `user.updates`
-- The last sent update is `user.lastUpdate`
-
-## Chat types
-
-### <samp>TestUser</samp>
-
-Defined at: <samp> [src/TestUser.ts](/src/TestUser.ts)</samp>
-
-Represents a Telegram user (Private chat). They can send, edit, forward, pin
-messages; send commands, media; query inline and click buttons. And stop, block,
-restart the bot.
-
-## TODO
-
-- Add `Group`, `SuperGroup`, `Channel` chat types.
-- Return proper API request results.
-
-  Example use case:
-  ```ts
-  const message = await ctx.reply("Hello!");
-  // Currently `message` is just `true`.
-  console.log(message.message_id);
-  // => undefined
-  ```
-- Add more _practical_ test cases and examples.
+> A much more detailed explanation will be added here later on.
 
 ---
 
-<p align="center">
-  <samp>
-    <a href="https://github.com/dcdunkan/tests/blob/main/LICENSE">Licensed under MIT</a>
-  </samp>
-</p>
+<div align="center">
+
+Licensed under MIT &copy; 2023 Dunkan
+
+</div>
